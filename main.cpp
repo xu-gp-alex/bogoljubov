@@ -11,6 +11,11 @@ int main() {
         std::cin >> despair;
         if (despair == "q") {
             break;
+        } else if (despair == "p") {
+            print_board();
+            // testing
+            get_captures();
+            continue;
         }
         user_move(despair);
         print_board();
