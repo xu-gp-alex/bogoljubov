@@ -2,5 +2,4 @@
 *.o
 notes.txt
 bogoljubov
-test
-test.cpp
+test/

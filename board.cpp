@@ -25,8 +25,8 @@ void init_board() {
         pieces[i] = init[i];
     }
 
-    bb_0  = 0xFFFF00000000FFFF;
-    bb_90 = 0xC3C3C3C3C3C3C3C3;
+    white_pieces = 0xffff000000000000;
+    black_pieces = 0x000000000000ffff;
 
     ply = 0;
     side = 0;
