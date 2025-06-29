@@ -8,13 +8,11 @@
 
 int main() {
     init_board();
+    std::cout << "loading magics...\n";
     generate_rook_magics();
-    std::cout << "rook magics generated\n";
-    debug_board(get_rook_moves(0, white_pieces | black_pieces));
-    // for (int i = 0; i < 64; i++) {
-    //     print_binary(f_bishop(i, 0));
-    // }
-    // init_board();
+    generate_bishop_magics();
+
+    // debug_board(get_knight_moves(1, white_pieces | black_pieces));
     // for (;;) {
     //     std::cout << "User Move: ";
     //     std::string despair;

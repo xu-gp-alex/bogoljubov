@@ -140,6 +140,38 @@ bool try_rook_magic(u64 square, u64 magic) {
     return true;
 }
 
+bool try_bishop_magic(u64 square, u64 magic) {
+    u64 attack_set = bishop_masks[square];
+        
+    for (u64 p = 0; p < (1 << __builtin_popcountll(attack_set)); p++) {
+        u64 subset = 0;
+        i32 p_bit = 0;
+        
+        // todo: find a better way to get the subsets of 
+        //       given attack set
+        for (i32 d = 0; d < 64; d++) {
+            if ((attack_set >> d) & 0x1) {
+                u64 resultant = (u64) (((p >> p_bit) & 0x1) << d);
+                subset |= resultant;
+                p_bit++;
+            }
+        }
+
+        // todo: i32 vs u32?
+        i32 index = (i32) ((subset * magic) >> (64 - 9));
+
+        if (bishop_moves[square][index] == 0) {
+            bishop_moves[square][index] = f_bishop(square, subset);
+        } else {
+            if (f_bishop(square, subset) != bishop_moves[square][index]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 /* board.cpp */
 
 // todo: make illegal moves illegal
@@ -199,9 +231,7 @@ void get_captures() {
 // todo: fucking inline??
 
 u64 get_rook_moves(i32 square, u64 occupancy) {
-    debug_board(occupancy);
     occupancy &= rook_masks[square];
-    debug_board(occupancy);
     occupancy *= rook_magics[square];
     occupancy >>= (64 - 12);
 
@@ -209,16 +239,17 @@ u64 get_rook_moves(i32 square, u64 occupancy) {
 }
 
 u64 get_bishop_moves(i32 square, u64 occupancy) {
-    u64 index = occupancy;
-    index &= bishop_masks[square];
-    index *= bishop_magics[square];
-    // todo: have to shift the product some amount...
-    // index <<= ???
+    occupancy &= bishop_masks[square];
+    occupancy *= bishop_magics[square];
+    occupancy >>= (64 - 9);
 
-    // todo: add the move_database shi later
-    // return MOVE_DATABASE[index]; same move database??
-    return 1;
+    return bishop_moves[square][occupancy];
 }
+
+// todo: probably delete later; looks redundant
+// u64 get_knight_moves(i32 square, u64 occupancy) {
+//     return knight_masks[square];
+// }
 
 // notes: need for each piece type?? how to efficiently split later?
 // u64 get_queen_moves(uint8_t square, u64 occupancy) {
@@ -238,5 +269,21 @@ void generate_rook_magics() {
         } while (!try_rook_magic(square, magic));
 
         rook_magics[square] = magic;
+    }
+}
+
+void generate_bishop_magics() {
+    for (i32 square = 0; square < 64; square++) {
+        u64 magic = 0;
+        do {
+            for (int j = 0; j < (1 << 9); j++) {
+                bishop_moves[square][j] = 0;
+            }
+
+            // notes: figure out how did they arrive at multiply 3 times?
+            magic = rand_u64() & rand_u64() & rand_u64();
+        } while (!try_bishop_magic(square, magic));
+
+        bishop_magics[square] = magic;
     }
 }

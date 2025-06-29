@@ -29,11 +29,13 @@ extern void get_captures();
 
 extern u64 get_rook_moves(i32 square, u64 occupancy);
 extern u64 get_bishop_moves(i32 square, u64 occupancy);
+extern u64 get_knight_moves(i32 square, u64 occupancy);
 
 // notes: should a function to generate_magics belong here??
-// notes: time this eventually
+// notes: benchmark this eventually
 
 extern void generate_rook_magics(); // (MUST BE CALLED BEFORE `init_board`)
+extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)
 
 // notes: for testing only, this is a horrible practice
 void debug_u64(u64 curr);

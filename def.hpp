@@ -1,5 +1,7 @@
 #pragma once
 
+// todo: lowk delete this header file...
+
 #define wP 0x1
 #define wN 0x2
 #define wK 0x3
@@ -14,6 +16,7 @@
 #define bB 0x84
 #define bR 0x85
 
+// todo: change later
 typedef struct {
     uint8_t from;
     uint8_t to;

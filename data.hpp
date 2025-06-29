@@ -20,6 +20,7 @@ extern u8 pieces[64];
 extern u8 init[64];
 // testing
 extern u8 test[64];
+extern u64 board[12];
 
 // todo: refine so from single struct "board"
 //       can access white/black, specific pieces, etc.
@@ -28,6 +29,8 @@ extern u64 black_pieces;
 // todo: should hardcode masks?
 extern const u64 rook_masks[64];
 extern const u64 bishop_masks[64];
+extern const u64 knight_masks[64];
+extern const u64 king_masks[64];
 // todo: decide whether to hardcode magics, currently
 //       will generate for each game
 // todo: perhaps incorporate more efficient magics,
@@ -38,8 +41,7 @@ extern u64 bishop_magics[64];
 // todo: should this fixed? if so, do you just copy a fucking
 //       arr[64][1 << 12] array directly into the .cpp file?
 extern u64 rook_moves[64][1 << 12];
-// extern uint64_t bishop_moves[64][1 << 12];
-
+extern u64 bishop_moves[64][1 << 9];
 
 extern u32 ply;
 extern u8 side;
