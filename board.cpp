@@ -1,42 +1,8 @@
-#include "board.hpp"
+#include "protos.hpp"
 
 /* helper functions */
-
-// todo: (IMPORTANT) make a more robust way in general to test the functions
-// todo: perhaps tell the user to run this (similar to run "set_hash" before hash in the tscp)
-// todo: fucking learn to debug beyond debug statements kms kms kms
-#include <string>
-#include <iostream>
-std::string str[] = {
-    "0000", "0001", "0010", "0011", 
-    "0100", "0101", "0110", "0111", 
-    "1000", "1001", "1010", "1011", 
-    "1100", "1101", "1110", "1111",
-};
-
-void debug_u64(u64 curr) {
-    std::cout << "0b ";
-    for (int i = 15; i >= 0; i--) {
-        std::cout << str[(curr >> (4 * i)) & 0xF] << ' ';
-    }
-    std::cout << std::endl;
-}
-
-std::string rev_str[] = {
-    "0000", "1000", "0100", "1100", 
-    "0010", "1010", "0110", "1110", 
-    "0001", "1001", "0101", "1101", 
-    "0011", "1011", "0111", "1111",
-};
-
-void debug_board(u64 curr) {
-    for (int i = 15; i >= 0; i-=2) {
-        std::cout << rev_str[(curr >> (4 * (i-1))) & 0xF];
-        std::cout << rev_str[(curr >> (4 * i)) & 0xF];
-        std::cout << '\n';
-    }
-    std::cout << '\n';
-}
+// todo: reorder to ts...
+// todo: replace the fucking devisions with the nicer row and file bitwise solns
 
 i32 rook_dir[4] = {8, -8, 1, -1}; // N, S, E, W
 /**
@@ -175,61 +141,50 @@ bool try_bishop_magic(u64 square, u64 magic) {
 /* board.cpp */
 
 // todo: make illegal moves illegal
-bool make_move(move curr) {
-    pieces[curr.to] = pieces[curr.from];
-    pieces[curr.from] = 0;
-    ply++;
+// bool make_move(move curr) {
+//     pieces[curr.to] = pieces[curr.from];
+//     pieces[curr.from] = 0;
+//     ply++;
     
-    // notes: works?
-    side = ~side;
-    return true;
-}
+//     // notes: works?
+//     side = ~side;
+//     return true;
+// }
+
+// todo: i lowkey hate working with structs for now?
+// bool make_move(u64 from, u64 to) {
+//     // u64 legal = get_legal_moves(from, white_pieces | black_pieces,  );
+//     return false;
+// }
 
 void init_board() {
     for (int i = 0; i < 64; i++) {
-        // testing
-        // pieces[i] = init[i];
-        pieces[i] = test[i];
+        pieces[i] = init[i];
     }
 
-    white_pieces = 0xffff000000000000;
-    black_pieces = 0x000000000000ffff;
+    // white_pieces = 0x000000000000ffff;
+    white_pieces = 0x00000000000000ff;
+    // black_pieces = 0xffff000000000000;
+    black_pieces = 0xff00000000000000;
+    // pawns = 0x00ff00000000ff00;
+    pawns = (u64) 0;
+    // pawns = 0x00ff000000000000;
+    rooks = 0x8100000000000081;
+    knights = 0x4200000000000042;
+    // knights = 0xffffffffffff0008;
+    bishops = 0x2400000000000024;
+    // bishops = 0xffffffffffff0008;
+    queens = 0x0800000000000008;
+    // queens = 0xffffffffffff0008;
+    kings = 0x1000000000000010;
 
     ply = 0;
     side = 0;
 }
 
-// notes: insanely retarded method
-// testing
-#include <iostream>
-void get_captures() {
-    // notes: perhaps just iterate through a *list* of white/black pieces?
-    uint8_t mask = (side) ? 0x0 : 0;
-    for (int i = 0; i < 64; i++) {
-        if (pieces[i] != 0) {
-            // testing
-            std::cout << i << ' ';
-            printf("%x ", mask);
-        }
-    }
-    std::cout << '\n';
-}
-
-// notes: insanely retarded method
-// std::vector<move> get_moves() {
-
-// }
-
-// notes: insanely retarded method
-// notes: supposed to use Zobrist something?
-// move get_rand_move() {
-
-// }
-
 // notes: function signature inspired by pradu kannan
 // notes: proper data types for inputs (uint8_t??)
 // todo: fucking inline??
-
 u64 get_rook_moves(i32 square, u64 occupancy) {
     occupancy &= rook_masks[square];
     occupancy *= rook_magics[square];
@@ -238,12 +193,239 @@ u64 get_rook_moves(i32 square, u64 occupancy) {
     return rook_moves[square][occupancy];
 }
 
+// notes: is it a good idea for the function to take in side?
+// todo: make this account for moves that expose the king to check
+// todo: would be nice of these inputs are consts
+//       (tho wouldn't matter? primitives alr passed by value anyways)
+u64 get_rook_legal_moves(i32 square, u64 occupancy, u8 side) {
+    // notes: fucking naming nameing nameing
+    // notes: how tf to good engines handle side bruh
+    u64 mask = (!side) ? ~white_pieces : ~black_pieces;
+    return get_rook_moves(square, occupancy) & mask;
+}
+
+u64 get_rook_captures(i32 square, u64 occupancy, u8 side) {
+    u64 mask = (!side) ? black_pieces : white_pieces;
+    return get_rook_legal_moves(square, occupancy, side) & mask;
+}
+
 u64 get_bishop_moves(i32 square, u64 occupancy) {
     occupancy &= bishop_masks[square];
     occupancy *= bishop_magics[square];
     occupancy >>= (64 - 9);
 
     return bishop_moves[square][occupancy];
+}
+
+// notes: a good method or not...
+// notes: i hate the two switch cases
+// notes: why do we pass in occupancy??
+// notes: isn't it the case you don't want to see the wires?
+// notes: seperate the sides?
+u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
+    u64 mask = (!side) ? ~white_pieces : ~black_pieces;
+
+    switch (piece_type) {
+        case wP:
+        case bP:
+            /* god have mercy on your soul */
+            break;
+
+        case wN:
+        case bN:
+            return knight_masks[square] & mask;
+
+        case wK:
+        case bK:
+            return king_masks[square] & mask;
+
+        case wQ:
+        case bQ:
+            // notes: space/tab/newline this to look pretty...
+            return (get_bishop_moves(square, occupancy) | 
+                    get_rook_moves(square, occupancy)) & mask;
+
+        case wB:
+        case bB:
+            return get_bishop_moves(square, occupancy) & mask;
+
+        case wR:
+        case bR:
+            return get_rook_moves(square, occupancy) & mask;
+
+        default:
+            break;
+    }
+
+    // notes: ofc this should never happen
+    return 0;
+}
+
+u64 get_captures(i32 square, u64 occupancy, i32 piece_type, u8 side) {
+    u64 mask = (!side) ? black_pieces : white_pieces;
+    return get_legal_moves(square, occupancy, piece_type, side) & mask;
+}
+
+void save_board() {
+    prev_board[0] = white_pieces;
+    prev_board[1] = black_pieces;
+    prev_board[2] = pawns;
+    prev_board[3] = rooks;
+    prev_board[4] = knights;
+    prev_board[5] = bishops;
+    prev_board[6] = queens;
+    prev_board[7] = kings;
+}
+
+void revert_board() {
+    white_pieces = prev_board[0];
+    black_pieces = prev_board[1];
+    pawns = prev_board[2];
+    rooks = prev_board[3];
+    knights = prev_board[4];
+    bishops = prev_board[5];
+    queens = prev_board[6];
+    kings = prev_board[7];
+}
+
+/**
+ * returns true if move is legal
+ * side effect: also executes move lol
+ */
+#include <iostream>
+bool accept_move(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
+    // ?? 
+
+    u64 true_start = (u64) 1 << start;
+    u64 goofy_ahh = (!side) ? white_pieces : black_pieces;
+    if (!(true_start & goofy_ahh)) {
+        printf("wrong side\n");
+        return false;
+    }
+
+    u64 true_end = (u64) 1 << end;
+    if (!(true_end & get_legal_moves(start, occupancy, piece_type, side))) {
+        debug_board(get_legal_moves(start, occupancy, piece_type, side));
+        printf("piece cannot make such move\n");
+        return false;
+    }
+
+    save_board();
+    exec_move(start, end, piece_type, side);
+    if (is_check(side, white_pieces | black_pieces)) {
+        revert_board();
+        return false;
+    }
+
+    pieces[start] = 0;
+    pieces[end] = piece_type;
+
+    // exec_move()
+    return true;
+}
+
+// bool is_legal(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
+//     u64 s_mask = ~((u64) 1 << start);
+//     u64 e_mask = (u64) 1 << start;
+
+//     u64 temp_occ = occupancy;
+//     temp_occ & s_mask;
+//     temp_occ | e_mask;
+
+//     save_board();
+//     exec_move(start, end, piece_type, side);
+//     bool res = is_check(side, temp_occ);
+
+
+//     return res;
+// }
+
+bool is_check(u8 side, u64 occupancy) {
+
+    // if (side == 0) {
+    //     side = 1;
+    // } else {
+    //     side = 0;
+    // }
+
+    u64 fuck = (side) ? white_pieces : black_pieces;
+
+    // i32 square = fuck & kings;
+    u64 square = (!side) ? white_pieces & kings : black_pieces & kings;
+    debug_board(square);
+    i32 sq = __builtin_ctzl(square);
+    
+
+    u64 straight = get_legal_moves(sq, occupancy, wR, side);
+    u64 diagonal = get_legal_moves(sq, occupancy, wB, side);
+    u64 horsey = get_legal_moves(sq, occupancy, wN, side);
+    debug_board(straight);
+    debug_board(diagonal);
+    debug_board(horsey);
+
+    u64 s = straight & (rooks | queens) & fuck;
+    u64 d = diagonal & (bishops | queens) & fuck;
+    u64 h = horsey & knights & fuck;
+
+    return s | d | h;
+}
+
+void exec_move(i32 start, i32 end, i32 piece_type, u8 side) {
+    u64 s_mask = ~((u64) 1 << start); // &
+    u64 e_mask = (u64) 1 << end; // |
+
+    switch (piece_type) {
+        case wP:
+        case bP:
+            pawns &= s_mask;
+            pawns |= e_mask;
+            break;
+
+        case wN:
+        case bN:
+            knights &= s_mask;
+            knights |= e_mask;
+            break;
+
+        case wK:
+        case bK:
+            kings &= s_mask;
+            kings |= e_mask;
+            break;
+
+        case wQ:
+        case bQ:
+            queens &= s_mask;
+            queens |= e_mask;
+            break;
+
+        case wB:
+        case bB:
+            bishops &= s_mask;
+            bishops |= e_mask;
+            break;
+
+        case wR:
+        case bR:
+            rooks &= s_mask;
+            rooks |= e_mask;
+            break;
+
+        default:
+            break;
+    }
+    
+    if (!side) {
+        white_pieces &= s_mask;
+        white_pieces |= e_mask;
+
+        black_pieces &= ~e_mask;
+    } else {
+        black_pieces &= s_mask;
+        black_pieces |= e_mask;
+
+        white_pieces &= ~e_mask;
+    }
 }
 
 // todo: probably delete later; looks redundant

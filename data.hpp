@@ -16,16 +16,26 @@ typedef std::uint8_t     u8;
 typedef std::uint32_t    u32;
 typedef std::uint64_t    u64;
 
+// notes: the fucking enums are just implicitly ints, how to fix later...
 extern u8 pieces[64];
-extern u8 init[64];
+extern const u8 init[64];
 // testing
-extern u8 test[64];
+// extern u8 test[64];
 extern u64 board[12];
 
 // todo: refine so from single struct "board"
 //       can access white/black, specific pieces, etc.
 extern u64 white_pieces;
 extern u64 black_pieces;
+extern u64 pawns;
+extern u64 rooks;
+extern u64 knights;
+extern u64 bishops;
+extern u64 queens;
+extern u64 kings;
+
+extern u64 prev_board[8];
+
 // todo: should hardcode masks?
 extern const u64 rook_masks[64];
 extern const u64 bishop_masks[64];

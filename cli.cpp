@@ -38,16 +38,34 @@ void print_board() {
 // todo: check valid string
 // todo: eventually accept algebraic notation
 // todo: debug ts
-void user_move(std::string curr) {
-    move res;
-    res.from = (curr[1] - '1') * 8 + (curr[0] - 'a');
-    res.to = (curr[3] - '1') * 8 + (curr[2] - 'a');
-    res.promote = 0;
-    bool legal = make_move(res);
+// void user_move(std::string curr) {
+//     move res;
+//     res.from = (curr[1] - '1') * 8 + (curr[0] - 'a');
+//     res.to = (curr[3] - '1') * 8 + (curr[2] - 'a');
+//     res.promote = 0;
+//     bool legal = make_move(res);
 
-    if (legal) {
-        printf("move made: %s\n", curr.c_str());
-    } else {
-        printf("illegal move\n");
+//     if (legal) {
+//         printf("move made: %s\n", curr.c_str());
+//     } else {
+//         printf("illegal move\n");
+//     }
+// }
+
+/**
+ * same "quirky" behavior when move is legal, it is automatically executed
+ */
+bool user_move(std::string curr) {
+    i32 from = (curr[1] - '1') * 8 + (curr[0] - 'a');
+    i32 to = (curr[3] - '1') * 8 + (curr[2] - 'a');
+    i32 piece_type = pieces[from];
+
+    // check here?
+    if (piece_type == 0) {
+        printf("no piece selected\n");
+        return false;
     }
+
+    bool res = accept_move(from, to, piece_type, white_pieces | black_pieces, side);
+    return res;
 }

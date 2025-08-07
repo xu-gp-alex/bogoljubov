@@ -9,12 +9,12 @@
 #define wB 0x5
 #define wR 0x6
 
-#define bP 0x80
-#define bN 0x81
-#define bK 0x82
-#define bQ 0x83
-#define bB 0x84
-#define bR 0x85
+#define bP 0x7
+#define bN 0x8
+#define bK 0x9
+#define bQ 0xa
+#define bB 0xb
+#define bR 0xc
 
 // todo: change later
 typedef struct {

@@ -6,7 +6,7 @@
 
 #include "data.hpp"
 #include "def.hpp"
-#include "board.hpp"
+#include "protos.hpp"
 
 extern void print_board();
-extern void user_move(std::string curr);
+extern bool user_move(std::string curr);

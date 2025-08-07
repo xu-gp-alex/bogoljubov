@@ -2,31 +2,52 @@
 
 // notes: pieces[0][0] should be the white, a-rook. 
 u8 pieces[64];
-u8 init[64] = {
+// const u8 init[64] = {
+//     wR, wN, wB, wQ, wK, wB, wN, wR,
+//     wP, wP, wP, wP, wP, wP, wP, wP, 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     bP, bP, bP, bP, bP, bP, bP, bP, 
+//     bR, bN, bB, bQ, bK, bB, bN, bR
+// };
+
+const u8 init[64] = {
     wR, wN, wB, wQ, wK, wB, wN, wR,
-    wP, wP, wP, wP, wP, wP, wP, wP, 
     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    bP, bP, bP, bP, bP, bP, bP, bP, 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
     bR, bN, bB, bQ, bK, bB, bN, bR
 };
+
 // testing
-u8 test[64] = {
-    wR, 0 , 0 , 0 , wK, 0 , 0 , wR,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , bP, 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    bR, 0 , 0 , bK, 0 , 0 , 0 , bR
-};
+// u8 test[64] = {
+//     wR, 0 , 0 , 0 , wK, 0 , 0 , wR,
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , bP, 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+//     bR, 0 , 0 , bK, 0 , 0 , 0 , bR
+// };
 
 // todo: implement bitboard-esque soln
 u64 white_pieces;
 u64 black_pieces;
+u64 pawns;
+u64 rooks;
+u64 knights;
+u64 bishops;
+u64 queens;
+u64 kings;
+
+u64 prev_board[8];
+
 // notes: good performance-wise?
 const u64 rook_masks[64] = {
     (u64) 0x101010101017e, 
