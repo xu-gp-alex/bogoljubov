@@ -48,6 +48,9 @@ extern const u64 king_masks[64];
 extern u64 rook_magics[64];
 extern u64 bishop_magics[64];
 
+extern const u64 white_pawn_captures[64];
+extern const u64 black_pawn_captures[64];
+
 // todo: should this fixed? if so, do you just copy a fucking
 //       arr[64][1 << 12] array directly into the .cpp file?
 extern u64 rook_moves[64][1 << 12];

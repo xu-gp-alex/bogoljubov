@@ -1,5 +1,8 @@
 #include "protos.hpp"
 
+// delete me
+#include <iostream>
+
 /* helper functions */
 // todo: reorder to ts...
 // todo: replace the fucking devisions with the nicer row and file bitwise solns
@@ -162,12 +165,12 @@ void init_board() {
         pieces[i] = init[i];
     }
 
-    // white_pieces = 0x000000000000ffff;
-    white_pieces = 0x00000000000000ff;
-    // black_pieces = 0xffff000000000000;
-    black_pieces = 0xff00000000000000;
-    // pawns = 0x00ff00000000ff00;
-    pawns = (u64) 0;
+    white_pieces = 0x000000000000ffff;
+    // white_pieces = 0x00000000000000ff;
+    black_pieces = 0xffff000000000000;
+    // black_pieces = 0xff00000000000000;
+    pawns = 0x00ff00000000ff00;
+    // pawns = (u64) 0;
     // pawns = 0x00ff000000000000;
     rooks = 0x8100000000000081;
     knights = 0x4200000000000042;
@@ -226,10 +229,34 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
     u64 mask = (!side) ? ~white_pieces : ~black_pieces;
 
     switch (piece_type) {
-        case wP:
-        case bP:
-            /* god have mercy on your soul */
-            break;
+        // case wP:
+        // case bP:
+        //     /* god have mercy on your soul */
+        //     // cleanliness
+        //     u64 captures = (!side) ? white_pawn_captures[square] & black_pieces :
+        //             black_pawn_captures[square] & white_pieces;
+
+        //     u64 pushes = 0;
+        //     u64 evil_mask = ~(white_pieces | black_pieces);
+        //     if (!side && square / 8 != 7) {
+        //         pushes = (u64) 1 << (square + 8);
+        //         pushes &= evil_mask;
+        //     } else if (side && square / 8 != 0) {
+        //         pushes = (u64) 1 << (square - 8);
+        //         pushes &= evil_mask;
+        //     }
+
+        //     // add eligiblity for two spaces
+        //     // | might be faster than + ??
+        //     if (!pushes) {
+        //         if (!side) {
+        //             pushes |= (((u64) 1 << (square + 16)) & evil_mask);
+        //         } else {
+        //             pushes |= (((u64) 1 << (square - 16)) & evil_mask);
+        //         }
+        //     }
+
+        //     return captures | pushes;
 
         case wN:
         case bN:
@@ -242,6 +269,9 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
         case wQ:
         case bQ:
             // notes: space/tab/newline this to look pretty...
+            // printf("hiya\n");
+            // debug_board(get_rook_moves(square, occupancy));
+            // debug_board(mask);
             return (get_bishop_moves(square, occupancy) | 
                     get_rook_moves(square, occupancy)) & mask;
 
@@ -255,6 +285,38 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
 
         default:
             break;
+    }
+
+    if (piece_type == wP || piece_type == bP) {
+        /* god have mercy on your soul */
+        // cleanliness
+        u64 captures = (!side) ? white_pawn_captures[square] & black_pieces :
+                black_pawn_captures[square] & white_pieces;
+
+        u64 pushes = 0;
+        u64 evil_mask = ~(white_pieces | black_pieces);
+        if (!side && square / 8 != 7) {
+            pushes = (u64) 1 << (square + 8);
+            pushes &= evil_mask;
+        } else if (side && square / 8 != 0) {
+            pushes = (u64) 1 << (square - 8);
+            pushes &= evil_mask;
+        }
+
+        // add eligiblity for two spaces
+        // | might be faster than + ??
+        if ((!side && square / 8 == 1) || (side && square / 8 == 6)) {
+            if (pushes) {
+                if (!side) {
+                    // printf("asdf\n");
+                    pushes |= (((u64) 1 << (square + 16)) & evil_mask);
+                } else {
+                    pushes |= (((u64) 1 << (square - 16)) & evil_mask);
+                }
+            }
+        }
+
+        return captures | pushes;
     }
 
     // notes: ofc this should never happen
@@ -292,7 +354,6 @@ void revert_board() {
  * returns true if move is legal
  * side effect: also executes move lol
  */
-#include <iostream>
 bool accept_move(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
     // ?? 
 
@@ -305,7 +366,7 @@ bool accept_move(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
 
     u64 true_end = (u64) 1 << end;
     if (!(true_end & get_legal_moves(start, occupancy, piece_type, side))) {
-        debug_board(get_legal_moves(start, occupancy, piece_type, side));
+        // debug_board(get_legal_moves(start, occupancy, piece_type, side));
         printf("piece cannot make such move\n");
         return false;
     }
@@ -352,16 +413,16 @@ bool is_check(u8 side, u64 occupancy) {
 
     // i32 square = fuck & kings;
     u64 square = (!side) ? white_pieces & kings : black_pieces & kings;
-    debug_board(square);
+    // debug_board(square);
     i32 sq = __builtin_ctzl(square);
     
 
     u64 straight = get_legal_moves(sq, occupancy, wR, side);
     u64 diagonal = get_legal_moves(sq, occupancy, wB, side);
     u64 horsey = get_legal_moves(sq, occupancy, wN, side);
-    debug_board(straight);
-    debug_board(diagonal);
-    debug_board(horsey);
+    // debug_board(straight);
+    // debug_board(diagonal);
+    // debug_board(horsey);
 
     u64 s = straight & (rooks | queens) & fuck;
     u64 d = diagonal & (bishops | queens) & fuck;

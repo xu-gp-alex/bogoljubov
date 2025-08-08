@@ -16,27 +16,6 @@ int main() {
     std::cout << "\nWelcome to BOGOLJUBOV chess engine :wilted-rose:\n";
     std::cout << "- enter \"q\" to quit\n\n";
 
-    // std::cout << "current occupancy\n";
-    // for (int i = 0; i < 7; i++) {
-    //     debug_board(get_legal_moves(i, white_pieces | black_pieces, pieces[i], 0));
-    // }
-
-    // debug_board(white_pieces);
-    // debug_board(black_pieces);
-    // debug_board(pawns);
-    // debug_board(rooks);
-    // debug_board(knights);
-    // debug_board(bishops);
-    // debug_board(queens);
-    // debug_board(kings);
-
-    // if (is_check(0, white_pieces | black_pieces)) {
-    //     std::cout << "in check\n";
-    // } else {
-    //     std::cout << "safe\n";
-    // }
-
-    // debug_board(get_knight_moves(1, white_pieces | black_pieces));
     print_board();
     for (;;) {
         std::cout << "User Move: ";
@@ -58,6 +37,14 @@ int main() {
             // debug_board(white_pieces);
             // debug_board(black_pieces);
         }
+        // debug_board(pawns);
+        // debug_board(black_pieces);
+        // debug_board(get_legal_moves(59, white_pieces | black_pieces, bQ, 1));
+        // debug_board(get_legal_moves(3, white_pieces | black_pieces, wQ, 0));
+        // debug_board(rook_masks[59]);
+        // debug_board(bishop_masks[59]);
+        // debug_board((u64) 0xf7ff);
+        // debug_board(get_legal_moves(3, (u64) 0xf7ff, wQ, 0));
         print_board();
     }
     return 0;
