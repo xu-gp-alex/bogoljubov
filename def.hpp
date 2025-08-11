@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+// deleteme
 #define wP 0x1
 #define wN 0x2
 #define wK 0x3
@@ -9,6 +10,7 @@
 #define wB 0x5
 #define wR 0x6
 
+// deleteme
 #define bP 0x7
 #define bN 0x8
 #define bK 0x9
@@ -27,10 +29,17 @@ enum Piece {
     X=-1, P, N, K, Q, B, R,
 };
 
+enum Side {
+    Black, White
+};
+
 typedef struct {
     i32 start;
     i32 end;
-    // bool side;
-    // Piece piece_type
     Piece promote;
+    Piece piece;
+    // alternatives:
+    // 1. bool side;
+    // 2. move_bits (from tom)
+    // 3. readable booleans..
 } move;

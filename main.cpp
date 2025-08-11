@@ -3,77 +3,7 @@
 #include <map>
 
 #include "protos.hpp"
-
-std::map<u8, std::string> itoa = {
-    {  0, " "}, 
-    { wP, "♟"}, 
-    { wN, "♞"}, 
-    { wK, "♚"}, 
-    { wQ, "♛"}, 
-    { wB, "♝"}, 
-    { wR, "♜"}, 
-    { bP, "♙"}, 
-    { bN, "♘"}, 
-    { bK, "♔"}, 
-    { bQ, "♕"}, 
-    { bB, "♗"}, 
-    { bR, "♖"}, 
-};
-
-// todo: also allow quick refresh so it looks like timer is counting down
-// todo: is printing out the board inefficient? also does it matter if it is?
-void print_board() {
-    std::cout << "+---+---+---+---+---+---+---+---+\n";
-    for (int i = 7; i >= 0; i--) {
-        std::cout<< "| ";
-        for (int j = 0; j < 8; j++) {
-            std::cout << itoa[pieces[i * 8 + j]] << " | ";
-        }
-        std::cout << "\n+---+---+---+---+---+---+---+---+\n";
-    }
-}
-
-std::map<char, Piece> str_to_piece = {
-    {'N', N},
-    {'Q', Q},
-    {'B', B},
-    {'R', R}
-};
-
-// notes: castling is just the king moving two spaces sometimes lmao
-// should return move struct, function doing too much(?)
-bool user_move(std::string curr) {
-    if (curr.length() != 4 && curr.length() != 6) {
-        return false;
-    }
-
-    if (curr[0] < 'a' || curr[0] > 'h' || curr[2] < 'a' || curr[2] > 'h') {
-        return false;
-    }
-
-    if (curr[1] < '1' || curr[1] > '8' || curr[3] < '1' || curr[3] > '8') {
-        return false;
-    }
-
-    if (curr.length() == 6 && (curr[4] != '=' || !str_to_piece.count(curr[5]))) {
-        return false;
-    }
-
-    i32 start = (curr[1] - '1') * 8 + (curr[0] - 'a');
-    i32 end = (curr[3] - '1') * 8 + (curr[2] - 'a');
-    i32 piece_type = pieces[start];
-    Piece promote = (curr.length() == 6) ? str_to_piece[curr[5]] : X;
-
-    // check here?
-    if (piece_type == 0) {
-        printf("no piece selected\n");
-        return false;
-    }
-
-    // bool res = make_move(start, end, piece_type, white_pieces | black_pieces, side);
-    // return res;
-    return false;
-}
+#include "cli.hpp"
 
 int main() {
     init_board();
@@ -84,38 +14,45 @@ int main() {
     // cli_game_loop()
     std::cout << "\nWelcome to BOGOLJUBOV chess engine :wilted-rose:\n";
     std::cout << "- enter \"q\" to quit\n";
-    std::cout << "- enter \"r\" to restart\n\n";
+    // std::cout << "- enter \"r\" to reset\n\n";
 
-    return 0;
+    Board board = get_new_board();
+    print_bitboards(board);
+
     for (;;) {
         std::cout << "User Move: ";
-        std::string despair;
-        std::cin >> despair;
-        if (despair == "q") {
+        std::string input;
+        std::cin >> input;
+        if (input == "q") {
             break;
-        } else if (despair == "r") {
+        } else if (input == "r") {
             init_board();
-            print_board();
+            board = get_new_board();
+            print_bitboards(board);
             continue;
         }
 
-        bool res = user_move(despair);
-        if (!res) {
-            printf("invalid move, please try again\n");
-        } else {
-            if (!side) {
-                black_en_pessant_tgt = -1;
+        if (valid_str(input)) {
+            move u = str_to_move(input, pieces);
+
+            // testing
+            if (side) {
+                debug_bitboard(get_white_pawn_moves(board, u.start, en_peasant), "white-pawn");
             } else {
-                white_en_pessant_tgt = -1;
+                debug_bitboard(get_black_pawn_moves(board, u.start, en_peasant), "black-pawn");
             }
+            
+            if (is_move_legal(board, u.start, u.end, u.piece, side, en_peasant)) {
+                board = make_move(board, u.start, u.end, u.piece, side, en_peasant);
 
-            printf("white_tgt: %d\n", white_en_pessant_tgt);
-            printf("black_tgt: %d\n", black_en_pessant_tgt);
-
-            side = (!side) ? 1 : 0; 
+                side = (side) ? Black : White;
+            } else {
+                std::cout << "invalid move, try again\n";
+            }
         }
-        
-        print_board();
+
+        print_bitboards(board);
     }
+
     return 0;
 }
