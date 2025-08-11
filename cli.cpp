@@ -22,7 +22,7 @@ std::map<uint8_t, std::string> itoa = {
 // todo: somehow clear terminal, so it looks like stationary chess board
 // todo: also allow quick refresh so it looks like timer is counting down
 // todo: is printing out the board inefficient? also does it matter if it is?
-void print_board() {
+void print_board(const u8 pieces[]) {
     printf("+---+---+---+---+---+---+---+---+\n");
     for (int i = 7; i >= 0; i--) {
         printf("| ");

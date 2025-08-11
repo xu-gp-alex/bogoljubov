@@ -1,13 +1,17 @@
+#include <iostream> // delete me
+#include <cstdlib>
+
 #include "protos.hpp"
 
-// delete me
-#include <iostream>
-
 /* helper functions */
-// todo: reorder to ts...
-// todo: replace the fucking devisions with the nicer row and file bitwise solns
+// todo: reorder ts...
+
+// to be cpp idiomatic?
+i32 ROW(i32 sq) { return sq >> 3; }
+i32 COL(i32 sq) { return sq & 7; }
 
 i32 rook_dir[4] = {8, -8, 1, -1}; // N, S, E, W
+
 /**
  * returns u64 representing moves of a rook
  * given its current square and surrounding pieces
@@ -39,6 +43,7 @@ u64 f_rook(i32 square, u64 occupancy) {
 }
 
 i32 bishop_dir[4] = {9, -7, -9, 7}; // NE, SE, SW, NW
+
 /**
  * returns u64 representing moves of a bishop
  * given its current square and surrounding pieces
@@ -69,8 +74,6 @@ u64 f_bishop(i32 square, u64 occupancy) {
     return res;
 }
 
-// todo: more better-er way of doing ts??
-#include <cstdlib>
 u64 rand_u64() {
     u64 hi = (u64) rand();
     u64 lo = (u64) rand();
@@ -154,35 +157,49 @@ bool try_bishop_magic(u64 square, u64 magic) {
 //     return true;
 // }
 
-// todo: i lowkey hate working with structs for now?
-// bool make_move(u64 from, u64 to) {
-//     // u64 legal = get_legal_moves(from, white_pieces | black_pieces,  );
-//     return false;
-// }
-
 void init_board() {
     for (int i = 0; i < 64; i++) {
-        pieces[i] = init[i];
+        // pieces[i] = init[i];
+        pieces[i] = test[i];
     }
 
     white_pieces = 0x000000000000ffff;
-    // white_pieces = 0x00000000000000ff;
     black_pieces = 0xffff000000000000;
-    // black_pieces = 0xff00000000000000;
     pawns = 0x00ff00000000ff00;
-    // pawns = (u64) 0;
-    // pawns = 0x00ff000000000000;
     rooks = 0x8100000000000081;
     knights = 0x4200000000000042;
-    // knights = 0xffffffffffff0008;
     bishops = 0x2400000000000024;
-    // bishops = 0xffffffffffff0008;
     queens = 0x0800000000000008;
-    // queens = 0xffffffffffff0008;
     kings = 0x1000000000000010;
+
+    white_pieces = 0x0001000000000000;
+    black_pieces = 0;
+    pawns = 0x0001000000000000;
+    rooks = 0;
+    knights = 0;
+    bishops = 0;
+    queens = 0;
+    kings = 0;
+
+    board[P] = 0x00ff00000000ff00;
+    board[N] = 0x4200000000000042;
+    board[K] = 0x1000000000000010;
+    board[Q] = 0x0800000000000008;
+    board[B] = 0x2400000000000024;
+    board[R] = 0x8100000000000081;
 
     ply = 0;
     side = 0;
+
+    white_en_pessant_tgt = -1;
+    black_en_pessant_tgt = -1;
+
+    w_king_moved = false;
+    a1_rook_moved = false;
+    h1_rook_moved = false;
+    b_king_moved = false;
+    a8_rook_moved = false;
+    h8_rook_moved = false;
 }
 
 // notes: function signature inspired by pradu kannan
@@ -196,28 +213,59 @@ u64 get_rook_moves(i32 square, u64 occupancy) {
     return rook_moves[square][occupancy];
 }
 
-// notes: is it a good idea for the function to take in side?
-// todo: make this account for moves that expose the king to check
-// todo: would be nice of these inputs are consts
-//       (tho wouldn't matter? primitives alr passed by value anyways)
-u64 get_rook_legal_moves(i32 square, u64 occupancy, u8 side) {
-    // notes: fucking naming nameing nameing
-    // notes: how tf to good engines handle side bruh
-    u64 mask = (!side) ? ~white_pieces : ~black_pieces;
-    return get_rook_moves(square, occupancy) & mask;
-}
-
-u64 get_rook_captures(i32 square, u64 occupancy, u8 side) {
-    u64 mask = (!side) ? black_pieces : white_pieces;
-    return get_rook_legal_moves(square, occupancy, side) & mask;
-}
-
 u64 get_bishop_moves(i32 square, u64 occupancy) {
     occupancy &= bishop_masks[square];
     occupancy *= bishop_magics[square];
     occupancy >>= (64 - 9);
 
     return bishop_moves[square][occupancy];
+}
+
+// i am genuinelly offing myself bruh
+u64 get_white_pawn_moves(i32 square, u64 occupancy) {return 0;}
+u64 get_black_pawn_moves(i32 square, u64 occupancy) {return 0;}
+
+u64 get_pawn_moves(i32 square, u64 occupancy, u8 side) {
+    /* god have mercy on your soul */
+    // cleanliness
+    u64 en_passant_sq = 0;
+    if (!side && black_en_pessant_tgt != -1) {
+        en_passant_sq = (u64) 1 << (40 + black_en_pessant_tgt);
+    } else if (side && white_en_pessant_tgt != -1) {
+        en_passant_sq = (u64) 1 << (16 + white_en_pessant_tgt);
+    }
+
+    u64 capturable = (!side) ? black_pieces | en_passant_sq : white_pieces | en_passant_sq;
+
+    u64 captures = (!side) ? white_pawn_captures[square] & capturable :
+            black_pawn_captures[square] & capturable;
+
+    // promotion just handles one sq
+    u64 pushes = 0;
+    
+    if (!side) { // && ROW(square) != 7
+        pushes = 0x00000000000100 << COL(square);
+        pushes &= ~occupancy;
+    } else {
+        pushes = 0x00010000000000 << COL(square);
+        pushes &= ~occupancy;
+    }
+
+    // eligiblity for two spaces
+    // | might be faster than + ??
+    if (ROW(square) == 1 || ROW(square) == 6) {
+        if (pushes) {
+            if (!side) {
+                pushes |= ((0x00000000010000 << COL(square)) & ~occupancy);
+                // white_en_pessant_tgt = COL(square);
+            } else {
+                pushes |= ((0x00000100000000 << COL(square)) & ~occupancy);
+                // black_en_pessant_tgt = COL(square);
+            }
+        }
+    }
+
+    return captures | pushes;
 }
 
 // notes: a good method or not...
@@ -229,34 +277,9 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
     u64 mask = (!side) ? ~white_pieces : ~black_pieces;
 
     switch (piece_type) {
-        // case wP:
-        // case bP:
-        //     /* god have mercy on your soul */
-        //     // cleanliness
-        //     u64 captures = (!side) ? white_pawn_captures[square] & black_pieces :
-        //             black_pawn_captures[square] & white_pieces;
-
-        //     u64 pushes = 0;
-        //     u64 evil_mask = ~(white_pieces | black_pieces);
-        //     if (!side && square / 8 != 7) {
-        //         pushes = (u64) 1 << (square + 8);
-        //         pushes &= evil_mask;
-        //     } else if (side && square / 8 != 0) {
-        //         pushes = (u64) 1 << (square - 8);
-        //         pushes &= evil_mask;
-        //     }
-
-        //     // add eligiblity for two spaces
-        //     // | might be faster than + ??
-        //     if (!pushes) {
-        //         if (!side) {
-        //             pushes |= (((u64) 1 << (square + 16)) & evil_mask);
-        //         } else {
-        //             pushes |= (((u64) 1 << (square - 16)) & evil_mask);
-        //         }
-        //     }
-
-        //     return captures | pushes;
+        case wP:
+        case bP:
+            return get_pawn_moves(square, occupancy) & mask;
 
         case wN:
         case bN:
@@ -268,10 +291,6 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
 
         case wQ:
         case bQ:
-            // notes: space/tab/newline this to look pretty...
-            // printf("hiya\n");
-            // debug_board(get_rook_moves(square, occupancy));
-            // debug_board(mask);
             return (get_bishop_moves(square, occupancy) | 
                     get_rook_moves(square, occupancy)) & mask;
 
@@ -287,46 +306,45 @@ u64 get_legal_moves(i32 square, u64 occupancy, i32 piece_type, u8 side) {
             break;
     }
 
-    if (piece_type == wP || piece_type == bP) {
-        /* god have mercy on your soul */
-        // cleanliness
-        u64 captures = (!side) ? white_pawn_captures[square] & black_pieces :
-                black_pawn_captures[square] & white_pieces;
-
-        u64 pushes = 0;
-        u64 evil_mask = ~(white_pieces | black_pieces);
-        if (!side && square / 8 != 7) {
-            pushes = (u64) 1 << (square + 8);
-            pushes &= evil_mask;
-        } else if (side && square / 8 != 0) {
-            pushes = (u64) 1 << (square - 8);
-            pushes &= evil_mask;
-        }
-
-        // add eligiblity for two spaces
-        // | might be faster than + ??
-        if ((!side && square / 8 == 1) || (side && square / 8 == 6)) {
-            if (pushes) {
-                if (!side) {
-                    // printf("asdf\n");
-                    pushes |= (((u64) 1 << (square + 16)) & evil_mask);
-                } else {
-                    pushes |= (((u64) 1 << (square - 16)) & evil_mask);
-                }
-            }
-        }
-
-        return captures | pushes;
-    }
-
-    // notes: ofc this should never happen
     return 0;
 }
 
-u64 get_captures(i32 square, u64 occupancy, i32 piece_type, u8 side) {
-    u64 mask = (!side) ? black_pieces : white_pieces;
-    return get_legal_moves(square, occupancy, piece_type, side) & mask;
+// friendly_pieces vs side
+u64 get_legal_moves(i32 square, u64 occupancy, Piece piece, u8 side) {
+    u64 friendlies = (!side) ? white_pieces : black_pieces;
+
+    switch (piece) {
+        // two different move sets based on black/white
+        case P:
+            return get_pawn_moves(square, occupancy, side) & ~friendlies;
+
+        case N:
+            return knight_masks[square] & ~friendlies;
+
+        case K:
+            return king_masks[square] & ~friendlies;
+
+        case Q:
+            return (get_bishop_moves(square, occupancy) | 
+                    get_rook_moves(square, occupancy)) & ~friendlies;
+
+        case B:
+            return get_bishop_moves(square, occupancy) & ~friendlies;
+
+        case R:
+            return get_rook_moves(square, occupancy) & ~friendlies;
+
+        default:
+            break;
+    }
+
+    return 0;
 }
+
+// u64 get_captures(i32 square, u64 occupancy, i32 piece_type, u8 side) {
+//     u64 mask = (!side) ? black_pieces : white_pieces;
+//     return get_legal_moves(square, occupancy, piece_type, side) & mask;
+// }
 
 void save_board() {
     prev_board[0] = white_pieces;
@@ -354,7 +372,8 @@ void revert_board() {
  * returns true if move is legal
  * side effect: also executes move lol
  */
-bool accept_move(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
+// reads from white_pieces and black_pieces...
+bool make_move(i32 start, i32 end, Piece piece, Piece promote_to, u8 side) {
     // ?? 
 
     u64 true_start = (u64) 1 << start;
@@ -385,21 +404,35 @@ bool accept_move(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
     return true;
 }
 
-// bool is_legal(i32 start, i32 end, i32 piece_type, u64 occupancy, u8 side) {
-//     u64 s_mask = ~((u64) 1 << start);
-//     u64 e_mask = (u64) 1 << start;
+bool is_move_legal(i32 start, i32 end, Piece piece, Piece promote_to, u64 enemy_pieces, u64 friendly_pieces, u8 side) {
+    u64 tgt_sq = (u64) 1 << end;
+    u64 occupancy = enemy_pieces | friendly_pieces;
 
-//     u64 temp_occ = occupancy;
-//     temp_occ & s_mask;
-//     temp_occ | e_mask;
+    switch (piece) {
+        case P:
+            return get_pawn_moves;
 
-//     save_board();
-//     exec_move(start, end, piece_type, side);
-//     bool res = is_check(side, temp_occ);
+        case N:
+            return knight_masks[start] & tgt_sq & ~friendly_pieces;
 
+        case K: // you can move king in check rn
+            return king_masks[start] & tgt_sq & ~friendly_pieces;
 
-//     return res;
-// }
+        case Q:
+            return (get_bishop_moves(start, occupancy) | get_rook_moves(start, occupancy)) & tgt_sq & ~friendly_pieces;
+
+        case B:
+            return get_bishop_moves(start, occupancy) & tgt_sq & ~friendly_pieces;
+
+        case R:
+            return get_rook_moves(start, occupancy) & tgt_sq & ~friendly_pieces;
+
+        default:
+            return false;
+    } 
+
+    return false;
+}
 
 bool is_check(u8 side, u64 occupancy) {
 
@@ -431,11 +464,11 @@ bool is_check(u8 side, u64 occupancy) {
     return s | d | h;
 }
 
-void exec_move(i32 start, i32 end, i32 piece_type, u8 side) {
+void exec_move(i32 start, i32 end, i32 piece, u8 side) {
     u64 s_mask = ~((u64) 1 << start); // &
     u64 e_mask = (u64) 1 << end; // |
 
-    switch (piece_type) {
+    switch (piece) {
         case wP:
         case bP:
             pawns &= s_mask;
@@ -473,8 +506,11 @@ void exec_move(i32 start, i32 end, i32 piece_type, u8 side) {
             break;
 
         default:
-            break;
+            return;
     }
+    // eventually...
+    // board[piece] &= s_mask;
+    // board[piece] |= e_mask;
     
     if (!side) {
         white_pieces &= s_mask;
@@ -489,15 +525,67 @@ void exec_move(i32 start, i32 end, i32 piece_type, u8 side) {
     }
 }
 
-// todo: probably delete later; looks redundant
-// u64 get_knight_moves(i32 square, u64 occupancy) {
-//     return knight_masks[square];
-// }
+void exec_en_pessant(i32 start, i32 end, u8 side) {
+    
+}
 
-// notes: need for each piece type?? how to efficiently split later?
-// u64 get_queen_moves(uint8_t square, u64 occupancy) {
-//     return get_rook_moves(square, occupancy) | get_bishop_moves(square, occupancy);
-// }
+void exec_castle(bool kingside, u8 side) {
+    if (!side) {
+        if (kingside) {
+            white_pieces ^= ((u64) 0xf0);
+            kings ^= ((u64) 0x50);
+            rooks ^= ((u64) 0xa0);
+            // cleanliness
+            pieces[4] = 0;
+            pieces[5] = wR;
+            pieces[6] = wK;
+            pieces[7] = 0;
+        } else {
+            white_pieces ^= ((u64) 0x1d);
+            kings ^= ((u64) 0x14);
+            rooks ^= ((u64) 0x09);
+            pieces[0] = 0;
+            pieces[2] = wK;
+            pieces[3] = wR;
+            pieces[4] = 0;
+        }
+    } else {
+        if (kingside) {
+            black_pieces ^= 0xf000000000000000;
+            kings ^= 0x5000000000000000;
+            rooks ^= 0xa000000000000000;
+            pieces[4 + 56] = 0;
+            pieces[5 + 56] = bR;
+            pieces[6 + 56] = bK;
+            pieces[7 + 56] = 0;
+        } else {
+            black_pieces ^= 0x1d00000000000000;
+            kings ^= 0x1400000000000000;
+            rooks ^= 0x0900000000000000;
+            pieces[0 + 56] = 0;
+            pieces[2 + 56] = bK;
+            pieces[3 + 56] = bR;
+            pieces[4 + 56] = 0;
+        }
+    }
+}
+
+// TODO: DO NOT ALSO DO A PAWN PUSH, CHANGE!!!
+void exec_promotion(i32 start, Piece promote_to, u8 side) {
+    if (!side) {
+        white_pieces ^= (0x0101000000000000 << COL(start));
+        pawns &= ~(0x0001000000000000 << COL(start));
+        board[promote_to] |= (0x0100000000000000 << COL(start));
+        pieces[start] = 0;
+        pieces[start + 8] = promote_to + 1;
+    } else {
+        black_pieces ^= ((u64) 0x0101 << COL(start));
+        pawns &= ~(0x0000000000000100 << COL(start));
+        board[promote_to] |= (0x0000000000000001 << COL(start));
+        pieces[start] = 0;
+        pieces[start - 8] = promote_to + 6;
+    }
+}
 
 void generate_rook_magics() {
     for (i32 square = 0; square < 64; square++) {

@@ -1,6 +1,6 @@
 #pragma once
 
-// todo: lowk delete this header file...
+#include <cstdint>
 
 #define wP 0x1
 #define wN 0x2
@@ -16,9 +16,21 @@
 #define bB 0xb
 #define bR 0xc
 
-// todo: change later
+typedef std::int8_t      i8;
+typedef std::int32_t     i32;
+typedef std::int64_t     i64;
+typedef std::uint8_t     u8;
+typedef std::uint32_t    u32;
+typedef std::uint64_t    u64;
+
+enum Piece {
+    X=-1, P, N, K, Q, B, R,
+};
+
 typedef struct {
-    uint8_t from;
-    uint8_t to;
-    uint8_t promote;
+    i32 start;
+    i32 end;
+    // bool side;
+    // Piece piece_type
+    Piece promote;
 } move;

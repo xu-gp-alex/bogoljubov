@@ -1,27 +1,12 @@
 #pragma once
 
-#include <cstdint>
-
-// todo: figure out which header files I should move into the cpp files
 #include "def.hpp"
 
-// notes: i believe this belongs here bc def.hpp currently
-//        does not need these cool ass integer types
-// notes: do the fancy spacing (properly) such that i32 and 
-//        u64 would be vertically aligned
-typedef std::int8_t      i8;
-typedef std::int32_t     i32;
-typedef std::int64_t     i64;
-typedef std::uint8_t     u8;
-typedef std::uint32_t    u32;
-typedef std::uint64_t    u64;
-
-// notes: the fucking enums are just implicitly ints, how to fix later...
 extern u8 pieces[64];
 extern const u8 init[64];
-// testing
-// extern u8 test[64];
-extern u64 board[12];
+extern const u8 test[64];
+
+extern u64 board[6]; // board --> boards
 
 // todo: refine so from single struct "board"
 //       can access white/black, specific pieces, etc.
@@ -37,6 +22,7 @@ extern u64 kings;
 extern u64 prev_board[8];
 
 // todo: should hardcode masks?
+// todo: what is the point of data.hpp?
 extern const u64 rook_masks[64];
 extern const u64 bishop_masks[64];
 extern const u64 knight_masks[64];
@@ -57,4 +43,16 @@ extern u64 rook_moves[64][1 << 12];
 extern u64 bishop_moves[64][1 << 9];
 
 extern u32 ply;
-extern u8 side;
+// todo: cataclysmic change but white should probably be 1
+//       lots of !side everywhere in the fucking code
+extern u8 side; // 0=white, 1=black
+
+extern i32 white_en_pessant_tgt;
+extern i32 black_en_pessant_tgt;
+
+extern bool w_king_moved;
+extern bool a1_rook_moved;
+extern bool h1_rook_moved;
+extern bool b_king_moved;
+extern bool a8_rook_moved;
+extern bool h8_rook_moved;

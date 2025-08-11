@@ -35,3 +35,13 @@ void debug_board(u64 curr) {
     }
     std::cout << '\n';
 }
+
+void debug_board(u64 curr, std::string label) {
+    std::cout << label << '\n';
+    for (int i = 15; i >= 0; i-=2) {
+        std::cout << rev_str[(curr >> (4 * (i-1))) & 0xF];
+        std::cout << rev_str[(curr >> (4 * i)) & 0xF];
+        std::cout << '\n';
+    }
+    std::cout << '\n';
+}

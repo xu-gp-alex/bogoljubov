@@ -1,6 +1,8 @@
 #include "data.hpp"
 
-// notes: pieces[0][0] should be the white, a-rook. 
+/**
+ * for reference, pieces[0] is a1 and pieces[63] is h8
+ */
 u8 pieces[64];
 const u8 init[64] = {
     wR, wN, wB, wQ, wK, wB, wN, wR,
@@ -12,29 +14,18 @@ const u8 init[64] = {
     bP, bP, bP, bP, bP, bP, bP, bP, 
     bR, bN, bB, bQ, bK, bB, bN, bR
 };
+const u8 test[64] = {
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    wP, 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
+    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 
+};
 
-// const u8 init[64] = {
-//     wR, wN, wB, wQ, wK, wB, wN, wR,
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     bR, bN, bB, bQ, bK, bB, bN, bR
-// };
-
-// testing
-// u8 test[64] = {
-//     wR, 0 , 0 , 0 , wK, 0 , 0 , wR,
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , bP, 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     bR, 0 , 0 , bK, 0 , 0 , 0 , bR
-// };
+u64 board[6];
 
 // todo: implement bitboard-esque soln
 u64 white_pieces;
@@ -425,3 +416,13 @@ u64 bishop_moves[64][1 << 9];
 
 u32 ply;
 u8 side;
+
+i32 white_en_pessant_tgt;
+i32 black_en_pessant_tgt;
+
+bool w_king_moved;
+bool a1_rook_moved;
+bool h1_rook_moved;
+bool b_king_moved;
+bool a8_rook_moved;
+bool h8_rook_moved;

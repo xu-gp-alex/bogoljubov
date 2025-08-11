@@ -1,9 +1,9 @@
 OBJECT_FILES = \
 	board.o \
-	cli.o \
 	data.o \
 	main.o \
 	debug.o \
+#	cli.o \
 # 	search.o \
 # 	eval.o \
 
@@ -18,7 +18,7 @@ bogoljubov: $(OBJECT_FILES)
 # -c because you need something to compile
 # $< because we are trying to compile .cpp files only
 # %.o: %.cpp board.hpp cli.hpp data.hpp def.hpp search.hpp eval.hpp
-%.o: %.cpp protos.hpp cli.hpp data.hpp def.hpp# search.hpp eval.hpp
+%.o: %.cpp protos.hpp data.hpp def.hpp # cli.hpp search.hpp eval.hpp
 	clang++ -O3 -c $< -o $@
 
 clean:
