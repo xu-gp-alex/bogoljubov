@@ -5,10 +5,6 @@
 /* helper functions */
 // todo: reorder ts...
 
-// to be cpp idiomatic?
-i32 ROW(i32 sq) { return sq >> 3; }
-i32 COL(i32 sq) { return sq & 7; }
-
 i32 rook_dir[4] = {8, -8, 1, -1}; // N, S, E, W
 
 /**
@@ -185,7 +181,7 @@ Board get_new_board() {
  * <function description>
  * (function signature inspired by pradu kannan)
  */
-u64 get_rook_moves(i32 square, u64 occupancy) { // should take Board& instead?
+u64 get_rook_moves(i32 square, u64 occupancy) { 
     occupancy &= rook_masks[square];
     occupancy *= rook_magics[square];
     occupancy >>= (64 - 12);

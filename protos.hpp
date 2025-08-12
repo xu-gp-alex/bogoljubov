@@ -5,6 +5,9 @@
 
 /* board.cpp */
 
+inline i32 ROW(i32 sq) { return sq >> 3; }
+inline i32 COL(i32 sq) { return sq & 7; }
+
 extern void init_board();
 extern Board get_new_board();
 
