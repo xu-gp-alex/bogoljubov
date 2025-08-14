@@ -12,7 +12,8 @@ extern const u8 test[64];
 
 // typedef??
 struct Board {
-    u64 pieces[6];
+    Piece pieces[64];
+    u64 pieces_bb[6];
     u64 sides[2];
 };
 
@@ -22,13 +23,10 @@ extern u32 ply;
 extern Side side; // 0=black, 1=white
 extern i32 en_peasant;
 
-// extern <datatype> castle;
-extern bool w_king_moved;
-extern bool a1_rook_moved;
-extern bool h1_rook_moved;
-extern bool b_king_moved;
-extern bool a8_rook_moved;
-extern bool h8_rook_moved;
+extern bool can_white_k_castle;
+extern bool can_white_q_castle;
+extern bool can_black_k_castle;
+extern bool can_black_q_castle;
 
 extern const u64 rook_masks[64];
 extern const u64 bishop_masks[64];

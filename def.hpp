@@ -18,6 +18,12 @@
 #define bB 0xb
 #define bR 0xc
 
+// define some useful squares
+// #define A1 0
+// #define H1 7
+// #define A8 56
+// #define H8 63
+
 typedef std::int8_t      i8;
 typedef std::int32_t     i32;
 typedef std::int64_t     i64;
@@ -37,9 +43,12 @@ typedef struct {
     i32 start;
     i32 end;
     Piece promote;
-    Piece piece;
+    // readable booleans..
+    bool k_castle; // if end-start==2
+    bool q_castle; // if start-end==2
+
     // alternatives:
-    // 1. bool side;
-    // 2. move_bits (from tom)
-    // 3. readable booleans..
+    // Piece piece; // not needed bc of pieces[]
+    // bool side; // not intrinsic to a move
+    // move_bits (from tom) // im stupid
 } move;

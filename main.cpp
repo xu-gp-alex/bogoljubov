@@ -34,16 +34,47 @@ int main() {
 
         if (valid_str(input)) {
             move u = str_to_move(input, pieces);
-
-            // testing
-            if (side) {
-                debug_bitboard(get_white_pawn_moves(board, u.start, en_peasant), "white-pawn");
-            } else {
-                debug_bitboard(get_black_pawn_moves(board, u.start, en_peasant), "black-pawn");
-            }
             
             if (is_move_legal(board, u.start, u.end, u.piece, side, en_peasant)) {
                 board = make_move(board, u.start, u.end, u.piece, side, en_peasant);
+                // make_move also takes castling rights? should the outside determine what boolean to pass in? (prolly yes)
+                
+                // pieces must be incorporated into Board struct first
+                if (COL(u.start) == 0 && board.pieces[u.start] == R) {
+                    if (side) {
+                        can_white_q_castle = false;
+                    } else {
+                        can_black_q_castle = false;
+                    }
+                }
+
+                if (COL(u.start) == 7 && board.pieces[u.start] == R) {
+                    if (side) {
+                        can_white_k_castle = false;
+                    } else {
+                        can_black_k_castle = false;
+                    }
+                }
+
+                if (board.pieces[u.start] == K) {
+                    if (side) {
+                        can_white_k_castle = false;
+                        can_white_q_castle = false;
+                    } else {
+                        can_black_k_castle = false;
+                        can_black_q_castle = false;
+                    }
+                }
+
+                if (u.k_castle || u.q_castle) {
+                    if (side) {
+                        can_white_k_castle = false;
+                        can_white_q_castle = false;
+                    } else {
+                        can_black_k_castle = false;
+                        can_black_q_castle = false;
+                    }
+                }
 
                 side = (side) ? Black : White;
             } else {

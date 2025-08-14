@@ -37,12 +37,10 @@ u32 ply;
 Side side;
 i32 en_peasant;
 
-bool w_king_moved;
-bool a1_rook_moved;
-bool h1_rook_moved;
-bool b_king_moved;
-bool a8_rook_moved;
-bool h8_rook_moved;
+bool can_white_k_castle;
+bool can_white_q_castle;
+bool can_black_k_castle;
+bool can_black_q_castle;
 
 const u64 rook_masks[64] = {
     0x101010101017eull, 
