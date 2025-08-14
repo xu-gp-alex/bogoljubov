@@ -43,6 +43,26 @@ void print_pieces(const u8 (&pieces)[64]) {
     }
 }
 
+void print_pieces(const Board &board) {
+    std::cout << "+---+---+---+---+---+---+---+---+\n";
+    for (int i = 7; i >= 0; i--) {
+        std::cout<< "| ";
+        for (int j = 0; j < 8; j++) {
+            i32 terminal_velocity = board.pieces[i * 8 + j];
+            bool mega_skill = board.sides[White] & (1ull << (i * 8 + j));
+            if (terminal_velocity == X) {
+                std::cout << itoa[0] << " | ";
+            } else if (mega_skill) {
+                std::cout << itoa[board.pieces[i * 8 + j] + 1] << " | ";
+            } else {
+                std::cout << itoa[board.pieces[i * 8 + j] + 7] << " | ";
+            }
+            // std::cout << itoa[pieces[i * 8 + j]] << " | ";
+        }
+        std::cout << "\n+---+---+---+---+---+---+---+---+\n";
+    }
+}
+
 void print_bitboards(const Board &board) {
     std::cout << '\n';
     std::cout << "P:        ";
@@ -57,7 +77,7 @@ void print_bitboards(const Board &board) {
 
     for (int i = 15; i >= 0; i-=2) {
         for (int j = 0; j < 6; j++) {
-            u64 curr = board.pieces[j];
+            u64 curr = board.pieces_bb[j];
             std::cout << rev_str[(curr >> (4 * (i-1))) & 0xF];
             std::cout << rev_str[(curr >> (4 * i)) & 0xF];
             std::cout << "  ";
@@ -116,49 +136,15 @@ bool valid_str(std::string input) {
     return true;
 }
 
-move str_to_move(std::string input, const u8 (&pieces)[64]) {
+move str_to_move(std::string input) {
     move res;
 
     res.start = (input[1] - '1') * 8 + (input[0] - 'a');
     res.end = (input[3] - '1') * 8 + (input[2] - 'a');
     res.promote = (input.length() == 6) ? str_to_piece[input[5]] : X;
 
-    // backwards compatibility :skull:
-    switch (pieces[res.start]) {
-        case wP:
-        case bP:
-            res.piece = P;
-            break;
-
-        case wN:
-        case bN:
-            res.piece = N;
-            break;
-
-        case wK:
-        case bK:
-            res.piece = K;
-            break;
-
-        case wQ:
-        case bQ:
-            res.piece = Q;
-            break;
-
-        case wB:
-        case bB:
-            res.piece = B;
-            break;
-
-        case wR:
-        case bR:
-            res.piece = R;
-            break;
-
-        default:
-            res.piece = X;
-            break;
-    }
+    res.k_castle = false;
+    res.q_castle = false;
 
     return res;
 }

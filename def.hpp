@@ -19,10 +19,12 @@
 #define bR 0xc
 
 // define some useful squares
-// #define A1 0
-// #define H1 7
-// #define A8 56
-// #define H8 63
+#define A1 0
+#define E1 4
+#define H1 7
+#define A8 56
+#define E8 60
+#define H8 63
 
 typedef std::int8_t      i8;
 typedef std::int32_t     i32;

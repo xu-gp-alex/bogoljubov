@@ -6,8 +6,9 @@
  * for reference, pieces[0] is a1 and pieces[63] is h8
  */
 extern u8 pieces[64];
-extern Piece pieces[64];
-extern const u8 init[64];
+// extern Piece pieces[64];
+// extern const u8 init[64];
+extern const Piece init[64];
 extern const u8 test[64];
 
 // typedef??
