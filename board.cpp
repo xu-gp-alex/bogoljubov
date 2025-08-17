@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream> // deleteme
 
 #include "protos.hpp"
 
@@ -323,15 +322,29 @@ u64 get_moves(const Board &board, i32 square, i32 en_peasant, bool k_castle, boo
 }
 
 bool is_move_legal(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion) {
-    // retarded bug where the king just changes sides; what the fuck
+    // checks that the piece moved is of the correct side
     u64 pieces_which_can_fucking_move = board.sides[side];
     if (!((1ull << start) & pieces_which_can_fucking_move)) {
         return false;
     }
 
-    // there exists better tway to do ts
-    if (promotion != X) {
-        if (board.pieces[start] != P || (ROW(end) != 0 && ROW(end) != 7)) {
+    // there MUST exist better tway to do ts
+    // if a pawn has been chosen to move on the penultimate rank
+    // it must promote
+    if (board.pieces[start] == P && 
+        ((ROW(start) == 1 && side == Black) || (ROW(start) == 6) && side == White)) {
+        if (promotion == X) {
+            return false;
+        }
+    }
+
+    // if a pawn is NOT on the penultimate rank and given a promotion, it's illegal lol
+    if (promotion != X) { 
+        if (board.pieces[start] != P) {
+            return false;
+        }
+
+        if ((ROW(start) != 1 && side == Black) || (ROW(start) != 6) && side == White) {
             return false;
         }
     }
@@ -437,13 +450,15 @@ Board exec_q_castle(const Board &board, i32 start) {
     return new_board;
 }
 
-Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion) {
+Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Side side) {
     Board new_board = board;
 
-    u64 s_mask = 1ull < start;
-    u64 e_mask = 1ull < end;
+    u64 s_mask = 1ull << start;
+    u64 e_mask = 1ull << end;
 
     new_board.sides[side] ^= (s_mask | e_mask);
+    // in case the pawn promotes whilst capturing
+    new_board.sides[side ^ 1] &= ~e_mask;
 
     new_board.pieces_bb[P] &= ~s_mask;
     new_board.pieces_bb[promotion] |= e_mask;
@@ -468,7 +483,7 @@ Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_c
     if (board.pieces[start] == P && COL(start) != COL(end) && board.pieces[end] == X) return exec_en_passant(board, start, end, en_peasant);
     if (board.pieces[start] == K && end - start == 2) return exec_k_castle(board, start);
     if (board.pieces[start] == K && start - end == 2) return exec_q_castle(board, start);
-    if (promotion != X) exec_promotion(board, start, end, promotion);
+    if (promotion != X) return exec_promotion(board, start, end, promotion, side);
 
     Board new_board = board;
 

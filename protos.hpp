@@ -42,7 +42,8 @@ extern bool is_check(i32 square, u64 occupancy, u64 s_p, u64 d_p, u64 h_p, u64 p
 extern Board exec_en_passant(const Board &board, i32 start, i32 end, i32 en_peasant); // evil
 extern Board exec_k_castle(const Board &board, i32 start); // evil
 extern Board exec_q_castle(const Board &board, i32 start); // evil
-Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion); // evil
+extern Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Side side); // prolly evil
+extern Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion); // evil
 
 // notes: should a function to generate_magics belong here??
 // notes: benchmark this eventually
