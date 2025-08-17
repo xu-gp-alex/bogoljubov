@@ -1,11 +1,9 @@
 #pragma once
 
-// eventually de-couple this somehow
 #include "data.hpp"
 
 /* board.cpp */
 
-// reddit suggested noexcept
 inline i32 ROW(i32 sq) { return sq >> 3; }
 inline i32 COL(i32 sq) { return sq & 7; }
 
@@ -24,11 +22,6 @@ extern u64 get_bishop_moves(i32 square, u64 occupancy);
 extern u64 get_rook_moves(i32 square, u64 occupancy);
 extern u64 get_queen_moves(i32 square, u64 occupancy);
 
-// add more consts, consts are awesome
-// could use templating?
-
-// horrible, can't check for checks??
-
 extern u64 case_k_castle(i32 square, u64 occupancy); // evil
 extern u64 case_q_castle(i32 square, u64 occupancy); // evil
 extern u64 case_en_passant(i32 square, u64 pawns, i32 en_peasant); // evil
@@ -44,9 +37,6 @@ extern Board exec_k_castle(const Board &board, i32 start); // evil
 extern Board exec_q_castle(const Board &board, i32 start); // evil
 extern Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Side side); // prolly evil
 extern Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion); // evil
-
-// notes: should a function to generate_magics belong here??
-// notes: benchmark this eventually
 
 extern void generate_rook_magics(); // (MUST BE CALLED BEFORE `init_board`)
 extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)

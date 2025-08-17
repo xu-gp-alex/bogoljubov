@@ -1,17 +1,6 @@
 #include "data.hpp"
 
 u8 pieces[64];
-// Piece pieces[64];
-// const u8 init[64] = {
-//     wR, wN, wB, wQ, wK, wB, wN, wR,
-//     wP, wP, wP, wP, wP, wP, wP, wP, 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-//     bP, bP, bP, bP, bP, bP, bP, bP, 
-//     bR, bN, bB, bQ, bK, bB, bN, bR
-// };
 const Piece init[64] = {
     R, N, B, Q, K, B, N, R,
     P, P, P, P, P, P, P, P, 
@@ -22,15 +11,15 @@ const Piece init[64] = {
     P, P, P, P, P, P, P, P, 
     R, N, B, Q, K, B, N, R
 };
-const u8 test[64] = {
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    wP, 0 , 0 , 0 , 0 , 0 , 0 , 0 , 
-    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 
+const Piece test[64] = {
+    R, N, B, Q, K, B, N, R,
+    P, P, P, P, P, P, P, P, 
+    X, X, X, X, X, X, X, X, 
+    X, X, X, X, X, X, X, X, 
+    X, X, X, X, X, X, X, X, 
+    X, X, X, X, X, X, X, X, 
+    P, P, P, P, P, P, P, P, 
+    R, N, B, Q, K, B, N, R
 };
 
 u32 ply;

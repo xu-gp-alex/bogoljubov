@@ -3,7 +3,6 @@
 #include "protos.hpp"
 
 /* helper functions */
-// todo: reorder ts...
 
 i32 rook_dir[4] = {8, -8, 1, -1}; // N, S, E, W
 
@@ -142,10 +141,6 @@ bool try_bishop_magic(u64 square, u64 magic) {
 /* board.cpp */
 
 void init_board() {
-    // for (int i = 0; i < 64; i++) {
-    //     pieces[i] = init[i];
-    // }
-
     ply = 0;
     side = White;
 
@@ -157,7 +152,6 @@ void init_board() {
     can_black_q_castle = true;
 }
 
-// reference instead?? kms
 Board get_new_board() {
     Board new_board;
 
@@ -176,9 +170,6 @@ Board get_new_board() {
     new_board.sides[White] = 0x000000000000ffffull;
     return new_board;
 }
-
-// notes: proper data types for inputs (uint8_t??)
-// todo: fucking inline??
 
 u64 get_white_pawn_pushes(i32 square, u64 occupancy) {
     u64 pushes = (1ull << (square + 8)) & ~occupancy;
@@ -504,23 +495,6 @@ Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_c
 
     return new_board;
 }
-
-// // TODO: DO NOT ALSO DO A PAWN PUSH, CHANGE!!!
-// void exec_promotion(i32 start, Piece promote_to, u8 side) {
-//     if (!side) {
-//         white_pieces ^= (0x0101000000000000 << COL(start));
-//         pawns &= ~(0x0001000000000000 << COL(start));
-//         board[promote_to] |= (0x0100000000000000 << COL(start));
-//         pieces[start] = 0;
-//         pieces[start + 8] = promote_to + 1;
-//     } else {
-//         black_pieces ^= ((u64) 0x0101 << COL(start));
-//         pawns &= ~(0x0000000000000100 << COL(start));
-//         board[promote_to] |= (0x0000000000000001 << COL(start));
-//         pieces[start] = 0;
-//         pieces[start - 8] = promote_to + 6;
-//     }
-// }
 
 void generate_rook_magics() {
     for (i32 square = 0; square < 64; square++) {

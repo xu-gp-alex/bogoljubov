@@ -2,22 +2,6 @@
 
 #include <cstdint>
 
-// deleteme
-#define wP 0x1
-#define wN 0x2
-#define wK 0x3
-#define wQ 0x4
-#define wB 0x5
-#define wR 0x6
-
-// deleteme
-#define bP 0x7
-#define bN 0x8
-#define bK 0x9
-#define bQ 0xa
-#define bB 0xb
-#define bR 0xc
-
 // define some useful squares
 #define A1 0
 #define E1 4
