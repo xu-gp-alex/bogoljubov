@@ -181,21 +181,29 @@ Board get_new_board() {
 // notes: proper data types for inputs (uint8_t??)
 // todo: fucking inline??
 
-u64 get_white_pawn_moves(i32 square, u64 occupancy) {
+u64 get_white_pawn_pushes(i32 square, u64 occupancy) {
     u64 pushes = (1ull << (square + 8)) & ~occupancy;
     if (ROW(square) == 1 && pushes) {
         pushes |= (1ull << (square + 16)) & ~occupancy;
     }
-    return pushes | white_pawn_captures[square];
+    return pushes;
 }
 
-u64 get_black_pawn_moves(i32 square, u64 occupancy) {
+u64 get_white_pawn_captures(i32 square) {
+    return white_pawn_captures[square];
+}
+
+u64 get_black_pawn_pushes(i32 square, u64 occupancy) {
     u64 pushes = (1ull << (square - 8)) & ~occupancy;
     if (ROW(square) == 6 && pushes) {
         pushes |= (1ull << (square - 16)) & ~occupancy;
     }
 
-    return pushes | black_pawn_captures[square];
+    return pushes;
+}
+
+u64 get_black_pawn_captures(i32 square) {
+    return black_pawn_captures[square];
 }
 
 u64 get_knight_moves(i32 square) {
@@ -229,12 +237,20 @@ u64 get_queen_moves(i32 square, u64 occupancy) {
     return get_rook_moves(square, occupancy) | get_bishop_moves(square, occupancy);
 }
 
+/**
+ * (jank function)
+ * add 1 to bitboard if no pieces in way of kingside castle
+ */
 u64 case_k_castle(i32 square, u64 occupancy) {
     u64 res = 1ull << (square + 2);
     occupancy &= 3ull << (square + 1);
     return (!occupancy) ? res : 0ull;
 }
 
+/**
+ * (jank function)
+ * add 1 to bitboard if no pieces in way of queenside castle
+ */
 u64 case_q_castle(i32 square, u64 occupancy) {
     u64 res = 1ull << (square - 2);
     occupancy &= 7ull << (square - 3);
@@ -258,19 +274,22 @@ u64 case_en_passant(i32 square, u64 pawns, i32 en_peasant) {
 u64 get_moves(const Board &board, i32 square, i32 en_peasant, bool k_castle, bool q_castle, Side side) {
     u64 occupancy = board.sides[Black] | board.sides[White];
     u64 friendly = board.sides[side];
+    // what in the fuck is this shit kms kms kms
+    u64 enemy = board.sides[side ^ 1];
     Piece piece = board.pieces[square];
-
-    std::cout << "piece: " << piece << '\n';
 
     u64 res = 0ull;
     switch (piece) {
         case P:
             if (side) {
-                if (en_peasant != -1) occupancy |= (1ull << (en_peasant + 8));
-                res = get_white_pawn_moves(square, occupancy) & ~friendly;
+                // ugliest fucking expression
+                if (en_peasant != -1) enemy |= (1ull << (en_peasant + 40));
+                res = (get_white_pawn_pushes(square, occupancy) & ~friendly) | 
+                        (get_white_pawn_captures(square) & enemy);
             } else {
-                if (en_peasant != -1) occupancy |= (1ull << (en_peasant + 48));
-                res = get_black_pawn_moves(square, occupancy) & ~friendly;
+                if (en_peasant != -1) enemy |= (1ull << (en_peasant + 16));
+                res = (get_black_pawn_pushes(square, occupancy) & ~friendly) | 
+                        (get_black_pawn_captures(square) & enemy);
             }
             break;
 
@@ -303,7 +322,20 @@ u64 get_moves(const Board &board, i32 square, i32 en_peasant, bool k_castle, boo
     return res;
 }
 
-bool is_move_legal(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side) {
+bool is_move_legal(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion) {
+    // retarded bug where the king just changes sides; what the fuck
+    u64 pieces_which_can_fucking_move = board.sides[side];
+    if (!((1ull << start) & pieces_which_can_fucking_move)) {
+        return false;
+    }
+
+    // there exists better tway to do ts
+    if (promotion != X) {
+        if (board.pieces[start] != P || (ROW(end) != 0 && ROW(end) != 7)) {
+            return false;
+        }
+    }
+
     u64 moves = get_moves(board, start, en_peasant, k_castle, q_castle, side);
     u64 cand = 1ull << end;
 
@@ -337,8 +369,8 @@ bool is_check(
     u64 s = get_rook_moves(square, occupancy);
     u64 d = get_bishop_moves(square, occupancy);
     u64 h = get_knight_moves(square);
-    // captures --> move correctness??
-    u64 p = (side) ? get_white_pawn_moves(square, occupancy) : get_black_pawn_moves(square, occupancy);
+
+    u64 p = (side) ? get_white_pawn_captures(square) : get_black_pawn_captures(square);
 
     u64 s_att = s & s_p;
     u64 d_att = d & d_p;
@@ -348,7 +380,24 @@ bool is_check(
     return s_att | d_att | h_att | p_att;
 }
 
+Board exec_en_passant(const Board &board, i32 start, i32 end, i32 en_peasant) {
+    Board new_board = board;
 
+    u64 death_of_joy = 1ull << start;
+    u64 hopelessness = 1ull << end;
+    u64 aimlessness = 1ull << (ROW(start) * 8 + en_peasant);
+
+    new_board.sides[side] ^= (death_of_joy | hopelessness);
+    new_board.sides[side ^ 1] ^= aimlessness;
+
+    new_board.pieces_bb[P] ^= (death_of_joy | hopelessness | aimlessness);
+    
+    new_board.pieces[start] = X;
+    new_board.pieces[end] = P;
+    new_board.pieces[ROW(start) * 8 + en_peasant] = X;
+
+    return new_board;
+}
 
 Board exec_k_castle(const Board &board, i32 start) {
     Board new_board = board;
@@ -388,6 +437,23 @@ Board exec_q_castle(const Board &board, i32 start) {
     return new_board;
 }
 
+Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion) {
+    Board new_board = board;
+
+    u64 s_mask = 1ull < start;
+    u64 e_mask = 1ull < end;
+
+    new_board.sides[side] ^= (s_mask | e_mask);
+
+    new_board.pieces_bb[P] &= ~s_mask;
+    new_board.pieces_bb[promotion] |= e_mask;
+
+    new_board.pieces[start] = X;
+    new_board.pieces[end] = promotion;
+
+    return new_board;
+}
+
 /**
  * should recognize castles
  * should recognize en passant
@@ -396,10 +462,13 @@ Board exec_q_castle(const Board &board, i32 start) {
  * should return the correct, following position
  * ASSUME ALL MOVES ARE LEGAL
  */
-Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side) {
-    // if (board.pieces[start] == P && board.pieces[end] == X) return;
+Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion) {
+    // 8-16-25 8:45pm, i hate everything
+    // bad variables..
+    if (board.pieces[start] == P && COL(start) != COL(end) && board.pieces[end] == X) return exec_en_passant(board, start, end, en_peasant);
     if (board.pieces[start] == K && end - start == 2) return exec_k_castle(board, start);
     if (board.pieces[start] == K && start - end == 2) return exec_q_castle(board, start);
+    if (promotion != X) exec_promotion(board, start, end, promotion);
 
     Board new_board = board;
 

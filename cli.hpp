@@ -4,11 +4,11 @@
 
 #include "data.hpp"
 
-extern void print_pieces(const u8 (&pieces)[64]);
 extern void print_pieces(const Board &board);
-extern void print_bitboards(const Board &board);
-extern void debug_bitboard(u64 curr);
-extern void debug_bitboard(u64 curr, std::string label);
+extern void debug_pieces(const Board &board);
+extern void debug_bbs(const Board &board);
+extern void debug_bb(u64 curr);
+extern void debug_bb(u64 curr, std::string label);
 
 // bad coding practice again??
 extern bool valid_str(std::string input);

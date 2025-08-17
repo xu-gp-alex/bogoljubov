@@ -4,45 +4,23 @@
 #include "cli.hpp"
 
 // notes: having this const breaks [] operator for some reason
-std::map<uint8_t, std::string> itoa = {
-    {  0, " "}, 
-    { wP, "♟"}, 
-    { wN, "♞"}, 
-    { wK, "♚"}, 
-    { wQ, "♛"}, 
-    { wB, "♝"}, 
-    { wR, "♜"}, 
-    { bP, "♙"}, 
-    { bN, "♘"}, 
-    { bK, "♔"}, 
-    { bQ, "♕"}, 
-    { bB, "♗"}, 
-    { bR, "♖"}, 
+std::map<i32, std::string> itoa = {
+    { 0, " "}, 
+    { 1, "♟"}, 
+    { 2, "♞"}, 
+    { 3, "♚"}, 
+    { 4, "♛"}, 
+    { 5, "♝"}, 
+    { 6, "♜"}, 
+    { 7, "♙"}, 
+    { 8, "♘"}, 
+    { 9, "♔"}, 
+    {10, "♕"}, 
+    {11, "♗"}, 
+    {12, "♖"}, 
 };
 
-// todo: (IMPORTANT) make a more robust way in general to test the functions
-// todo: fucking learn to debug beyond debug statements kms kms kms
-std::string rev_str[] = {
-    "0000", "1000", "0100", "1100", 
-    "0010", "1010", "0110", "1110", 
-    "0001", "1001", "0101", "1101", 
-    "0011", "1011", "0111", "1111",
-};
-
-// todo: somehow clear terminal, so it looks like stationary chess board
-// todo: also allow quick refresh so it looks like timer is counting down
 // todo: is printing out the board inefficient? also does it matter if it is?
-void print_pieces(const u8 (&pieces)[64]) {
-    std::cout << "+---+---+---+---+---+---+---+---+\n";
-    for (int i = 7; i >= 0; i--) {
-        std::cout<< "| ";
-        for (int j = 0; j < 8; j++) {
-            std::cout << itoa[pieces[i * 8 + j]] << " | ";
-        }
-        std::cout << "\n+---+---+---+---+---+---+---+---+\n";
-    }
-}
-
 void print_pieces(const Board &board) {
     std::cout << "+---+---+---+---+---+---+---+---+\n";
     for (int i = 7; i >= 0; i--) {
@@ -63,7 +41,25 @@ void print_pieces(const Board &board) {
     }
 }
 
-void print_bitboards(const Board &board) {
+void debug_pieces(const Board &board) {
+    for (int i = 7; i >= 0; i--) {
+        for (int j = 0; j < 8; j++) {
+            std::cout << itoa[board.pieces[i * 8 + j]+1];
+        }
+        std::cout << '\n';
+    }
+}
+
+// todo: (IMPORTANT) make a more robust way in general to test the functions
+// todo: fucking learn to debug beyond debug statements kms kms kms
+std::string rev_str[] = {
+    "0000", "1000", "0100", "1100", 
+    "0010", "1010", "0110", "1110", 
+    "0001", "1001", "0101", "1101", 
+    "0011", "1011", "0111", "1111",
+};
+
+void debug_bbs(const Board &board) {
     std::cout << '\n';
     std::cout << "P:        ";
     std::cout << "N:        ";
@@ -95,7 +91,7 @@ void print_bitboards(const Board &board) {
     std::cout << '\n';
 }
 
-void debug_bitboard(u64 curr) {
+void debug_bb(u64 curr) {
     for (int i = 15; i >= 0; i-=2) {
         std::cout << rev_str[(curr >> (4 * (i-1))) & 0xF];
         std::cout << rev_str[(curr >> (4 * i)) & 0xF];
@@ -104,9 +100,9 @@ void debug_bitboard(u64 curr) {
     std::cout << '\n';
 }
 
-void debug_bitboard(u64 curr, std::string label) {
+void debug_bb(u64 curr, std::string label) {
     std::cout << label << '\n';
-    debug_bitboard(curr);
+    debug_bb(curr);
 }
 
 std::map<char, Piece> str_to_piece = {
