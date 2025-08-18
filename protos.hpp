@@ -26,6 +26,8 @@ extern u64 case_k_castle(i32 square, u64 occupancy); // evil
 extern u64 case_q_castle(i32 square, u64 occupancy); // evil
 extern u64 case_en_passant(i32 square, u64 pawns, i32 en_peasant); // evil
 
+// k_castle and q_castle are redundant currently
+
 extern u64 get_moves(const Board &board, i32 square, i32 en_peasant, bool k_castle, bool q_castle, Side side); // evil
 
 extern bool is_move_legal(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion); // evil
@@ -40,3 +42,9 @@ extern Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, b
 
 extern void generate_rook_magics(); // (MUST BE CALLED BEFORE `init_board`)
 extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)
+
+/* search.cpp */
+
+extern move random_guess(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, Side side);
+
+/* eval.cpp */

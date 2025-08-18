@@ -1,7 +1,7 @@
+#include "cli.hpp"
+
 #include <iostream>
 #include <map>
-
-#include "cli.hpp"
 
 // notes: having this const breaks [] operator for some reason
 std::map<i32, std::string> itoa = {
