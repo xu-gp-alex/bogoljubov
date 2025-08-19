@@ -1,10 +1,11 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <unistd.h> // delete me
+#include <chrono> // deleteme
+#include <thread> // deleteme
 
 #include "protos.hpp"
-#include "cli.hpp"
+// #include "cli.hpp" // revertme
 
 int main() {
     init_board();
@@ -21,9 +22,7 @@ int main() {
     Board board = get_new_board();
 
     // testing
-    // move yuh = random_guess(board, -1, true, true, side);
-    // std::cout << "start: " << yuh.start << '\n';
-    // std::cout << "end: " << yuh.end << '\n';
+    // print_pieces(board);
     // return 0;
 
     // lazy coding lol
@@ -48,6 +47,9 @@ int main() {
 
         if (valid_str(input)) {
             move u = str_to_move(input);
+
+            // testing
+            print_move(u);
 
             if (board.pieces[u.start] == K && u.end - u.start == 2) u.k_castle = true;
             if (board.pieces[u.start] == K && u.start - u.end == 2) u.q_castle = true;
@@ -122,19 +124,26 @@ int main() {
     }
 
     if (no_control) {
-        i32 limit = 20;
+        i32 limit = 400;
         while (limit--) {
             bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
             bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
 
             move u = random_guess(board, en_peasant, k_uacamole, q_uacamole, side);
-            if (u.start == -1) {
+            if (u.start == null_move.start) {
                 break;
             }
+
+            if (board.pieces[u.start] == K && u.end - u.start == 2) u.k_castle = true;
+            if (board.pieces[u.start] == K && u.start - u.end == 2) u.q_castle = true;
 
             Piece stupid = board.pieces[u.start];
             Piece slimed = board.pieces[u.end];
             board = make_move(board, u.start, u.end, en_peasant, k_uacamole, q_uacamole, side, u.promote);
+
+            // testing
+            // debug_bb(board.sides[White], "White");
+            // debug_bb(board.sides[Black], "Black");
 
             // make_move also takes castling rights? should the outside determine what boolean to pass in? (prolly yes)
             
@@ -190,7 +199,7 @@ int main() {
             }
 
             side = (side) ? Black : White;
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     }
     

@@ -5,6 +5,8 @@
 #include "data.hpp"
 
 extern void print_pieces(const Board &board);
+extern void print_move(const move &move);
+
 extern void debug_pieces(const Board &board);
 extern void debug_bbs(const Board &board);
 extern void debug_bb(u64 curr);

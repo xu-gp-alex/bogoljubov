@@ -404,3 +404,5 @@ u64 rook_magics[64];
 u64 bishop_magics[64];
 u64 rook_moves[64][1 << 12];
 u64 bishop_moves[64][1 << 9];
+
+const move null_move = {-1, -1, X, false, false};

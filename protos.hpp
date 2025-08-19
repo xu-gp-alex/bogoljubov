@@ -1,11 +1,12 @@
 #pragma once
 
 #include "data.hpp"
-
-/* board.cpp */
+#include "cli.hpp" // DELETEME
 
 inline i32 ROW(i32 sq) { return sq >> 3; }
 inline i32 COL(i32 sq) { return sq & 7; }
+
+/* board.cpp */
 
 extern void init_board();
 extern Board get_new_board();

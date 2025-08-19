@@ -4,21 +4,29 @@
 #include <map>
 
 // notes: having this const breaks [] operator for some reason
-std::map<i32, std::string> itoa = {
-    { 0, " "}, 
-    { 1, "♟"}, 
-    { 2, "♞"}, 
-    { 3, "♚"}, 
-    { 4, "♛"}, 
-    { 5, "♝"}, 
-    { 6, "♜"}, 
-    { 7, "♙"}, 
-    { 8, "♘"}, 
-    { 9, "♔"}, 
-    {10, "♕"}, 
-    {11, "♗"}, 
-    {12, "♖"}, 
-};
+// const std::map<i32, std::string> w_piece_to_str = {
+//     { 0, " "}, 
+//     { 1, "♟"}, 
+//     { 2, "♞"}, 
+//     { 3, "♚"}, 
+//     { 4, "♛"}, 
+//     { 5, "♝"}, 
+//     { 6, "♜"}, 
+// };
+
+// always add one i guess
+const std::string w_piece_to_str[] = {" ", "♟", "♞", "♚", "♛", "♝", "♜"};
+const std::string b_piece_to_str[] = {" ", "♙", "♘", "♔", "♕", "♗", "♖"};
+
+// const std::map<i32, std::string> b_piece_to_str = {
+//     {0, " "}, 
+//     {1, "♙"}, 
+//     {2, "♘"}, 
+//     {3, "♔"}, 
+//     {4, "♕"}, 
+//     {5, "♗"}, 
+//     {6, "♖"}, 
+// };
 
 // todo: is printing out the board inefficient? also does it matter if it is?
 void print_pieces(const Board &board) {
@@ -26,25 +34,35 @@ void print_pieces(const Board &board) {
     for (int i = 7; i >= 0; i--) {
         std::cout<< "| ";
         for (int j = 0; j < 8; j++) {
-            i32 terminal_velocity = board.pieces[i * 8 + j];
-            bool mega_skill = board.sides[White] & (1ull << (i * 8 + j));
-            if (terminal_velocity == X) {
-                std::cout << itoa[0] << " | ";
-            } else if (mega_skill) {
-                std::cout << itoa[board.pieces[i * 8 + j] + 1] << " | ";
+            i32 curr_piece = board.pieces[i * 8 + j] + 1;
+            bool is_white = board.sides[White] & (1ull << (i * 8 + j));
+
+            if (curr_piece == X || is_white) {
+                std::cout << w_piece_to_str[curr_piece] << " | ";
             } else {
-                std::cout << itoa[board.pieces[i * 8 + j] + 7] << " | ";
+                std::cout << b_piece_to_str[curr_piece] << " | ";
             }
-            // std::cout << itoa[pieces[i * 8 + j]] << " | ";
         }
         std::cout << "\n+---+---+---+---+---+---+---+---+\n";
     }
 }
 
+void print_move(const move &move) {
+    if (move.start == null_move.start) return;
+
+    std::cout << (char) (97 + (move.start & 7));
+    std::cout << (move.start >> 3) + 1;
+    std::cout << (char) (97 + (move.end & 7));
+    std::cout << (move.end >> 3) + 1;
+
+    std::cout << '\n';
+}
+
 void debug_pieces(const Board &board) {
     for (int i = 7; i >= 0; i--) {
         for (int j = 0; j < 8; j++) {
-            std::cout << itoa[board.pieces[i * 8 + j]+1];
+            i32 curr_piece = board.pieces[i * 8 + j] + 1;
+            std::cout << w_piece_to_str[curr_piece];
         }
         std::cout << '\n';
     }

@@ -37,3 +37,5 @@ extern u64 rook_magics[64];
 extern u64 bishop_magics[64];
 extern u64 rook_moves[64][1 << 12];
 extern u64 bishop_moves[64][1 << 9];
+
+extern const move null_move;
