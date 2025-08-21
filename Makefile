@@ -4,6 +4,7 @@ OBJECT_FILES = \
 	main.o \
 	cli.o \
 	search.o \
+	eval.o
 
 all: bogoljubov
 

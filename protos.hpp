@@ -3,6 +3,8 @@
 #include "data.hpp"
 #include "cli.hpp" // DELETEME
 
+#include <vector>
+
 inline i32 ROW(i32 sq) { return sq >> 3; }
 inline i32 COL(i32 sq) { return sq & 7; }
 
@@ -46,6 +48,9 @@ extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)
 
 /* search.cpp */
 
+extern std::vector<move> extract_moves(const Board& board, bool k_castle, bool q_castle, Side side);
 extern move random_guess(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, Side side);
 
 /* eval.cpp */
+
+extern i32 evaluate(const Board &board);

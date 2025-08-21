@@ -2,10 +2,6 @@
 
 #include "def.hpp"
 
-/**
- * for reference, pieces[0] is a1 and pieces[63] is h8
- */
-extern u8 pieces[64];;
 extern const Piece init[64];
 extern const Piece test[64];
 
@@ -13,6 +9,8 @@ struct Board {
     Piece pieces[64];
     u64 pieces_bb[6];
     u64 sides[2];
+
+    // i32 en_peasant? (can be updated in make_move)
 };
 
 // extern Board global_board;
