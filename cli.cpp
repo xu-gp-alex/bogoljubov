@@ -3,30 +3,9 @@
 #include <iostream>
 #include <map>
 
-// notes: having this const breaks [] operator for some reason
-// const std::map<i32, std::string> w_piece_to_str = {
-//     { 0, " "}, 
-//     { 1, "♟"}, 
-//     { 2, "♞"}, 
-//     { 3, "♚"}, 
-//     { 4, "♛"}, 
-//     { 5, "♝"}, 
-//     { 6, "♜"}, 
-// };
-
 // always add one i guess
 const std::string w_piece_to_str[] = {" ", "♟", "♞", "♚", "♛", "♝", "♜"};
 const std::string b_piece_to_str[] = {" ", "♙", "♘", "♔", "♕", "♗", "♖"};
-
-// const std::map<i32, std::string> b_piece_to_str = {
-//     {0, " "}, 
-//     {1, "♙"}, 
-//     {2, "♘"}, 
-//     {3, "♔"}, 
-//     {4, "♕"}, 
-//     {5, "♗"}, 
-//     {6, "♖"}, 
-// };
 
 // todo: is printing out the board inefficient? also does it matter if it is?
 void print_pieces(const Board &board) {
@@ -47,7 +26,7 @@ void print_pieces(const Board &board) {
     }
 }
 
-void print_move(const move &move) {
+void print_move(const Move &move) {
     if (move.start == null_move.start) return;
 
     std::cout << (char) (97 + (move.start & 7));
@@ -123,15 +102,15 @@ void debug_bb(u64 curr, std::string label) {
     debug_bb(curr);
 }
 
-std::map<char, Piece> str_to_piece = {
-    {'N', N},
-    {'Q', Q},
-    {'B', B},
-    {'R', R}
+std::map<char, Piece> valid_promotions = {
+    {'n', N},
+    {'q', Q},
+    {'n', B},
+    {'r', R}
 };
 
 bool valid_str(std::string input) {
-    if (input.length() != 4 && input.length() != 6) {
+    if (input.length() != 4 && input.length() != 5) {
         return false;
     }
 
@@ -143,22 +122,41 @@ bool valid_str(std::string input) {
         return false;
     }
 
-    if (input.length() == 6 && (input[4] != '=' || !str_to_piece.count(input[5]))) {
+    if (input.length() == 5 && !valid_promotions.count(input[4])) {
         return false;
     }
 
     return true;
 }
 
-move str_to_move(std::string input) {
-    move res;
+// lowk in board.cpp?
+Move str_to_move(const Board &board, std::string input) {
+    Move res = null_move;
 
     res.start = (input[1] - '1') * 8 + (input[0] - 'a');
     res.end = (input[3] - '1') * 8 + (input[2] - 'a');
-    res.promote = (input.length() == 6) ? str_to_piece[input[5]] : X;
 
-    res.k_castle = false;
-    res.q_castle = false;
+    if (input.length() == 5) {
+        res.promote = valid_promotions[input[4]];
+    }
+
+    Piece piece = board.pieces[res.start];
+    Piece captured = board.pieces[res.end];
+
+    if (piece == K && res.end - res.start == 2) {
+        res.k_castle = true;
+    }
+
+    if (piece == K && res.start - res.end == 2) {
+        res.q_castle = true;
+    }
+
+    // will this lead to excessive checks for en peasant?
+    // jank: check capture by seeing files don't align
+    if (piece == P && (res.start & 7) != (res.end & 7) && captured == X) {
+        res.en_peasant = true;
+    }
 
     return res;
 }
+

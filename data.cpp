@@ -11,20 +11,11 @@ const Piece init[64] = {
     P, P, P, P, P, P, P, P, 
     R, N, B, Q, K, B, N, R
 };
-const Piece test[64] = {
-    R, N, B, Q, K, B, N, R,
-    P, P, P, P, P, P, P, P, 
-    X, X, X, X, X, X, X, X, 
-    X, X, X, X, X, X, X, X, 
-    X, X, X, X, X, X, X, X, 
-    X, X, X, X, X, X, X, X, 
-    P, P, P, P, P, P, P, P, 
-    R, N, B, Q, K, B, N, R
-};
 
 u32 ply;
 Side side;
-i32 en_peasant;
+i32 moved_2_spaces;
+bool decisive_result;
 
 bool can_white_k_castle;
 bool can_white_q_castle;
@@ -405,4 +396,4 @@ u64 bishop_magics[64];
 u64 rook_moves[64][1 << 12];
 u64 bishop_moves[64][1 << 9];
 
-const move null_move = {-1, -1, X, false, false};
+const Move null_move = {-1, -1, X, false, false, false};

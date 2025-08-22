@@ -3,21 +3,20 @@
 #include "def.hpp"
 
 extern const Piece init[64];
-extern const Piece test[64];
 
+// move to def.hpp?
 struct Board {
     Piece pieces[64];
     u64 pieces_bb[6];
     u64 sides[2];
-
-    // i32 en_peasant? (can be updated in make_move)
 };
 
 // extern Board global_board;
 
 extern u32 ply;
 extern Side side; // 0=black, 1=white
-extern i32 en_peasant;
+extern i32 moved_2_spaces;
+extern bool decisive_result; // make this express more results
 
 extern bool can_white_k_castle;
 extern bool can_white_q_castle;
@@ -36,4 +35,4 @@ extern u64 bishop_magics[64];
 extern u64 rook_moves[64][1 << 12];
 extern u64 bishop_moves[64][1 << 9];
 
-extern const move null_move;
+extern const Move null_move;

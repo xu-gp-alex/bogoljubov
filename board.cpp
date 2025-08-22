@@ -1,6 +1,31 @@
 #include "protos.hpp"
+// #include "rook_moves.hpp"
+// #include "bishop_moves.hpp"
 
 #include <cstdlib>
+#include <string>
+#include <iostream> // deleteme
+
+// (refer to cpw flipping bits)
+// (horrible no good reference)
+
+/**
+ * flips the n-th bit of the value `bits` to 1
+ * note this **directly modifies** `bits`
+ */
+void flip_to_1(u64 &bits, i32 n) { // flip_to_1 --> set
+    bits |= (1ull << n);
+}
+
+/**
+ * flips the n-th bit of the value `bits` to 0
+ * note this **directly modifies** `bits`
+ */
+void flip_to_0(u64 &bits, i32 n) { // flip_to_0 --> clear
+    bits &= ~(1ull << n);
+}
+
+/* toggle? */
 
 /* helper functions */
 
@@ -140,11 +165,11 @@ bool try_bishop_magic(u64 square, u64 magic) {
 
 /* board.cpp */
 
-void init_board() {
+void init_data() {
     ply = 0;
     side = White;
-
-    en_peasant = -1;
+    moved_2_spaces = -1;
+    decisive_result = false;
 
     can_white_k_castle = true;
     can_white_q_castle = true;
@@ -168,6 +193,12 @@ Board get_new_board() {
 
     new_board.sides[Black] = 0xffff000000000000ull;
     new_board.sides[White] = 0x000000000000ffffull;
+    return new_board;
+}
+
+// not implemented
+Board get_custom_board(std::string setup) {
+    Board new_board;
     return new_board;
 }
 
@@ -228,177 +259,136 @@ u64 get_queen_moves(i32 square, u64 occupancy) {
 }
 
 /**
- * (jank function)
- * add 1 to bitboard if no pieces in way of kingside castle
+ * makes sure king is not kingside castling through pieces
  */
-u64 case_k_castle(i32 square, u64 occupancy) {
-    u64 res = 1ull << (square + 2);
+bool can_k_castle(i32 square, u64 occupancy) {
     occupancy &= 3ull << (square + 1);
-    return (!occupancy) ? res : 0ull;
+    return occupancy == 0ull;
 }
 
 /**
- * (jank function)
- * add 1 to bitboard if no pieces in way of queenside castle
+ * makes sure king is not queenside castling through pieces
  */
-u64 case_q_castle(i32 square, u64 occupancy) {
-    u64 res = 1ull << (square - 2);
+bool can_q_castle(i32 square, u64 occupancy) {
     occupancy &= 7ull << (square - 3);
-    return (!occupancy) ? res : 0ull;
-}
-
-// not implemented
-u64 case_en_passant(i32 square, u64 pawns, i32 en_peasant) {
-    return 0ull;
+    return occupancy == 0ull;
 }
 
 /**
- * gets pseudolegal moves in an evil manner.
- * case_k_castle literally makes no fucking sense.
- * en passant is fucking impossible to test.
- * also shitty parameter names as usual.
- * @param en_peasant file of pawn which recently moved 2 spaces (`-1` if not applicable)
- * @param k_castle has kingside castle occurred yet?
- * @param q_castle has queenside castle occurred yet?
+ * checks if the enemy pawn which moved two spaces
+ * is in *file* next to current pawn
  */
-u64 get_moves(const Board &board, i32 square, i32 en_peasant, bool k_castle, bool q_castle, Side side) {
-    u64 occupancy = board.sides[Black] | board.sides[White];
-    u64 friendly = board.sides[side];
-    // what in the fuck is this shit kms kms kms
-    u64 enemy = board.sides[side ^ 1];
-    Piece piece = board.pieces[square];
-
-    u64 res = 0ull;
-    switch (piece) {
-        case P:
-            if (side) {
-                // ugliest fucking expression
-                if (en_peasant != -1) enemy |= (1ull << (en_peasant + 40));
-                res = (get_white_pawn_pushes(square, occupancy) & ~friendly) | 
-                        (get_white_pawn_captures(square) & enemy);
-            } else {
-                if (en_peasant != -1) enemy |= (1ull << (en_peasant + 16));
-                res = (get_black_pawn_pushes(square, occupancy) & ~friendly) | 
-                        (get_black_pawn_captures(square) & enemy);
-            }
-            break;
-
-        case N:
-            res = get_knight_moves(square) & ~friendly;
-            break;
-
-        case K:
-            if (k_castle) res |= case_k_castle(square, occupancy);
-            if (q_castle) res |= case_q_castle(square, occupancy);
-            res |= (get_king_moves(square) & ~friendly);
-            break;
-
-        case Q:
-            res = get_queen_moves(square, occupancy) & ~friendly;
-            break;
-
-        case B:
-            res = get_bishop_moves(square, occupancy) & ~friendly;
-            break;
-
-        case R:
-            res = get_rook_moves(square, occupancy) & ~friendly;
-            break;
-
-        default:
-            break;
-    }
-
-    return res;
+bool can_en_peasant(i32 square, i32 enemy_m2s) {
+    return abs(square - enemy_m2s) == 1;
 }
-
-bool is_move_legal(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion) {
-    // checks that the piece moved is of the correct side
-    u64 pieces_which_can_fucking_move = board.sides[side];
-    if (!((1ull << start) & pieces_which_can_fucking_move)) {
-        return false;
-    }
-
-    // there MUST exist better tway to do ts
-    // if a pawn has been chosen to move on the penultimate rank
-    // it must promote
-    if (board.pieces[start] == P && 
-        ((ROW(start) == 1 && side == Black) || (ROW(start) == 6) && side == White)) {
-        if (promotion == X) {
-            return false;
-        }
-    }
-
-    // if a pawn is NOT on the penultimate rank and given a promotion, it's illegal lol
-    if (promotion != X) { 
-        if (board.pieces[start] != P) {
-            return false;
-        }
-
-        if ((ROW(start) != 1 && side == Black) || (ROW(start) != 6) && side == White) {
-            return false;
-        }
-    }
-
-    u64 moves = get_moves(board, start, en_peasant, k_castle, q_castle, side);
-    u64 cand = 1ull << end;
-
-    return moves & cand;
-}
-
-// horrendous naming / argument placement
-// really don't want to pass in Side side
 
 /**
- * @brief rename these fucking parameters:
- * @param s_p enemy horizontal or vertical attackers
- * @param d_p enemy diagonal attackers
- * @param h_p enemy knights
- * @param p_p enemy pawns
+ * @brief returns bitboard representing all possible moves of a piece (on the specified square)
+ * disregarding leaving or placing the king in check
+ * @param m2s file of pawn which recently moved 2 spaces (`-1` if not applicable)
+ * @param can_k_castle whether kingside castle is eventually possible
+ * @param can_q_castle whether queenside castle is eventually possible
  * @return
  */
-bool is_check(
-    i32 square, 
-    u64 occupancy, 
-    u64 s_p, 
-    u64 d_p, 
-    u64 h_p, 
-    u64 p_p, 
-    Side side
-) {
+u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s) {
+    u64 occupancy = friendly | enemy;
+    u64 moves = 0ull;
 
-    // following can be used to find i32 square given bitboard:
-    // i32 sq = __builtin_ctzl(u64 bit_board);
+    if (piece == P) {
+        if (side) {
+            moves = get_white_pawn_pushes(square, occupancy);
+            moves |= get_white_pawn_captures(square) & enemy;
+        } else {
+            moves = get_black_pawn_pushes(square, occupancy);
+            moves |= get_black_pawn_captures(square) & enemy;
+        }
 
-    u64 s = get_rook_moves(square, occupancy);
-    u64 d = get_bishop_moves(square, occupancy);
-    u64 h = get_knight_moves(square);
+        // not sufficient to show en_passant is possible
+        if (enemy_m2s != -1 && can_en_peasant(square, enemy_m2s)) {
+            if (side) {
+                flip_to_1(moves, enemy_m2s + 8);
+            } else {
+                flip_to_1(moves, enemy_m2s - 8);
+            }
+        }
 
-    u64 p = (side) ? get_white_pawn_captures(square) : get_black_pawn_captures(square);
+    } else if (piece == N) {
+        moves = get_knight_moves(square) & ~friendly;
+    } else if (piece == K) {
+        moves = get_king_moves(square) & ~friendly;
 
-    u64 s_att = s & s_p;
-    u64 d_att = d & d_p;
-    u64 h_att = h & h_p;
-    u64 p_att = p & p_p;
+        if (k_castle_possible && can_k_castle(square, occupancy)) {
+            flip_to_1(moves, square + 2);
+        } 
 
-    return s_att | d_att | h_att | p_att;
+        if (q_castle_possible && can_q_castle(square, occupancy)) {
+            flip_to_1(moves, square - 2);
+        }
+
+    } else if (piece == Q) {
+        moves = get_queen_moves(square, occupancy) & ~friendly;
+    } else if (piece == B) {
+        moves = get_bishop_moves(square, occupancy) & ~friendly;
+    } else if (piece == R) {
+        moves = get_rook_moves(square, occupancy) & ~friendly;
+    }
+
+    return moves;
 }
 
-Board exec_en_passant(const Board &board, i32 start, i32 end, i32 en_peasant) {
+// sadness
+// why does this take side??
+bool can_promote(i32 square, Side side) {
+    return (side == White && ROW(square) == 6) ||
+            (side == Black && ROW(square) == 1);
+}
+
+bool is_move_legal(const Board &board, Move m, Side side, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s) {
+    u64 friendly = board.sides[side];
+    u64 enemy = board.sides[side ^ 1];
+    u64 piece = board.pieces[m.start];
+
+    if ((friendly & (1ull << m.start)) == 0ull) { std::cout << "can't move opponent's piece lol\n"; return false; } // can't move opponent's piece lol
+    if (m.promote != X && !can_promote(m.start, side)) { std::cout << "can't promote pawns before last rank\n"; return false; } // can't promote pawns before last rank
+    if (m.promote == X && can_promote(m.start, side)) { std::cout << "can't promote to pawn\n"; return false; } // can't promote to pawn
+    if (m.k_castle && !k_castle_possible) { std::cout << "can't castle kingside\n"; return false; } // can't castle kingside
+    if (m.q_castle && !q_castle_possible) { std::cout << "can't castle queenside\n"; return false; } // can't castle queenside
+    if (m.en_peasant && enemy_m2s == -1) { std::cout << "nothing to en peasant\n"; return false; } // nothing to en peasant
+
+    u64 moves = get_pseudolegal_moves(friendly, enemy, m.start, board.pieces[m.start], k_castle_possible, q_castle_possible, enemy_m2s);
+    u64 cand = 1ull << m.end;
+    return moves & cand; // see if ending square is amongst the (pseudo)legal moves
+}
+
+bool is_check(i32 square, u64 occupancy, u64 enemy_R_or_Q, u64 enemy_B_or_Q, u64 enemy_N, u64 enemy_wP,u64 enemy_bP, Side side) {
+    enemy_R_or_Q &= get_rook_moves(square, occupancy);
+    enemy_B_or_Q &= get_bishop_moves(square, occupancy);
+    enemy_N &= get_knight_moves(square);
+    enemy_wP &= get_black_pawn_captures(square);
+    enemy_bP &= get_white_pawn_captures(square);
+
+    return enemy_R_or_Q | enemy_B_or_Q | enemy_N | enemy_wP | enemy_bP;
+}
+
+Board exec_en_passant(const Board &board, i32 start, i32 end) {
     Board new_board = board;
 
-    u64 death_of_joy = 1ull << start;
-    u64 hopelessness = 1ull << end;
-    u64 aimlessness = 1ull << (ROW(start) * 8 + en_peasant);
+    u64 tgt_sq = (ROW(start) * 8) + COL(end);
 
-    new_board.sides[side] ^= (death_of_joy | hopelessness);
-    new_board.sides[side ^ 1] ^= aimlessness;
+    // update piece bitboards
+    flip_to_0(new_board.pieces_bb[P], start);
+    flip_to_1(new_board.pieces_bb[P], end);
+    flip_to_0(new_board.pieces_bb[P], tgt_sq);
 
-    new_board.pieces_bb[P] ^= (death_of_joy | hopelessness | aimlessness);
+    // update color bitboards
+    flip_to_0(new_board.sides[side], start);
+    flip_to_1(new_board.sides[side], end);
+    flip_to_0(new_board.sides[side ^ 1], tgt_sq);
     
+    // update piece array
     new_board.pieces[start] = X;
     new_board.pieces[end] = P;
-    new_board.pieces[ROW(start) * 8 + en_peasant] = X;
+    new_board.pieces[tgt_sq] = X;
 
     return new_board;
 }
@@ -409,11 +399,14 @@ Board exec_k_castle(const Board &board, i32 start) {
     u64 king_mask = 0x5ull << start;
     u64 rook_mask = 0xaull << start;
 
-    new_board.sides[side] ^= (king_mask | rook_mask);
-
+    // update piece bitboards
     new_board.pieces_bb[K] ^= king_mask;
     new_board.pieces_bb[R] ^= rook_mask;
+
+    // update color bitboards
+    new_board.sides[side] ^= (king_mask | rook_mask);
     
+    // update piece array
     new_board.pieces[start] = X;
     new_board.pieces[start + 1] = R;
     new_board.pieces[start + 2] = K;
@@ -428,11 +421,14 @@ Board exec_q_castle(const Board &board, i32 start) {
     u64 king_mask = 0x14ull << (start - 4);
     u64 rook_mask = 0x9ull << (start - 4);
 
-    new_board.sides[side] ^= (king_mask | rook_mask);
-
+    // update piece bitboards
     new_board.pieces_bb[K] ^= king_mask;
     new_board.pieces_bb[R] ^= rook_mask;
+
+    // update color bitboards
+    new_board.sides[side] ^= (king_mask | rook_mask);
     
+    // update piece array
     new_board.pieces[start] = X;
     new_board.pieces[start - 1] = R;
     new_board.pieces[start - 2] = K;
@@ -441,57 +437,54 @@ Board exec_q_castle(const Board &board, i32 start) {
     return new_board;
 }
 
-Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Side side) {
+Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Piece captured, Side side) {
     Board new_board = board;
 
-    u64 s_mask = 1ull << start;
-    u64 e_mask = 1ull << end;
+    // update piece bitboards
+    flip_to_0(new_board.pieces_bb[P], start);
+    flip_to_1(new_board.pieces_bb[promotion], end);
+    if (captured != X) {
+        flip_to_0(new_board.pieces_bb[captured], end);
+    }
 
-    new_board.sides[side] ^= (s_mask | e_mask);
-    // in case the pawn promotes whilst capturing
-    new_board.sides[side ^ 1] &= ~e_mask;
+    // update color bitboards
+    flip_to_0(new_board.sides[side], start);
+    flip_to_1(new_board.sides[side], end);
+    flip_to_0(new_board.sides[side ^ 1], end);
 
-    new_board.pieces_bb[P] &= ~s_mask;
-    new_board.pieces_bb[promotion] |= e_mask;
-
+    // update piece array
     new_board.pieces[start] = X;
     new_board.pieces[end] = promotion;
 
     return new_board;
 }
 
-/**
- * should recognize castles
- * should recognize en passant
- * search will iterate through u64 get_moves()
- * if start and end as sus enough, make_move
- * should return the correct, following position
- * ASSUME ALL MOVES ARE LEGAL
- */
-Board make_move(const Board &board, i32 start, i32 end, i32 en_peasant, bool k_castle, bool q_castle, Side side, Piece promotion) {
-    // 8-16-25 8:45pm, i hate everything
-    // bad variables..
-    if (board.pieces[start] == P && COL(start) != COL(end) && board.pieces[end] == X) return exec_en_passant(board, start, end, en_peasant);
-    if (board.pieces[start] == K && end - start == 2) return exec_k_castle(board, start);
-    if (board.pieces[start] == K && start - end == 2) return exec_q_castle(board, start);
-    if (promotion != X) return exec_promotion(board, start, end, promotion, side);
+// ASSUME ALL MOVES ARE LEGAL
+Board make_move(const Board &board, Move m, Side side) {
+    if (m.promote != X) return exec_promotion(board, m.start, m.end, m.promote, board.pieces[m.end], side); // <-- jank as to how captured is passed
+    if (m.k_castle) return exec_k_castle(board, m.start); // side
+    if (m.q_castle) return exec_q_castle(board, m.start); // side
+    if (m.en_peasant) return exec_en_passant(board, m.start, m.end); 
 
     Board new_board = board;
+    Piece piece = board.pieces[m.start];
+    Piece captured = board.pieces[m.end];
 
-    Piece piece = board.pieces[start];
-    u64 s_mask = ~(1ull << start); // &
-    u64 e_mask = 1ull << end; // |
+    // update piece bitboards
+    flip_to_0(new_board.pieces_bb[piece], m.start);
+    flip_to_1(new_board.pieces_bb[piece], m.end);
+    if (captured != X) {
+        flip_to_0(new_board.pieces_bb[captured], m.end);
+    }
 
-    // shitty naming
-    new_board.pieces_bb[piece] &= s_mask;
-    new_board.pieces_bb[piece] |= e_mask;
+    // update color bitboards
+    flip_to_0(new_board.sides[side], m.start);
+    flip_to_1(new_board.sides[side], m.end);
+    flip_to_0(new_board.sides[side ^ 1], m.end);
 
-    new_board.sides[side] &= s_mask;
-    new_board.sides[side] |= e_mask;
-    new_board.sides[side ^ 1] &= ~e_mask;
-
-    new_board.pieces[start] = X;
-    new_board.pieces[end] = piece;
+    // update piece array
+    new_board.pieces[m.start] = X;
+    new_board.pieces[m.end] = piece;
 
     return new_board;
 }

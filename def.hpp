@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-// define some useful squares
+// useful squares
 #define A1 0
 #define E1 4
 #define H1 7
@@ -18,7 +18,7 @@ typedef std::uint32_t    u32;
 typedef std::uint64_t    u64;
 
 enum Piece {
-    X=-1, P, N, K, Q, B, R,
+    X=-1, P, N, K, Q, B, R, // replace P with wP and bP
 };
 
 enum Side {
@@ -28,13 +28,10 @@ enum Side {
 typedef struct {
     i32 start;
     i32 end;
-    Piece promote;
-    // readable booleans..
-    bool k_castle; // if end-start==2
-    bool q_castle; // if start-end==2
 
-    // alternatives:
-    // Piece piece; // not needed bc of pieces[]
-    // bool side; // not intrinsic to a move
-    // move_bits (from tom) // im stupid
-} move;
+    // unique *types* of moves
+    Piece promote;
+    bool k_castle; 
+    bool q_castle; 
+    bool en_peasant; // --> sq i32 instead..??
+} Move;
