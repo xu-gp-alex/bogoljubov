@@ -6,71 +6,18 @@
 #include "protos.hpp"
 #include "cli.hpp"
 
-void update_global_states(Move m, Piece piece, Piece captured) {
-    /* pawns pushed 2 squares */
-    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
-        moved_2_spaces = m.end;
-    } else {
-        moved_2_spaces = -1;
-    }
-
-    /* invalidating castling by moving rook */
-    if (COL(m.start) == 0 && piece == R) {
-        if (side) {
-            can_white_q_castle = false;
-        } else {
-            can_black_q_castle = false;
-        }
-    }
-
-    if (COL(m.start) == 7 && piece == R) {
-        if (side) {
-            can_white_k_castle = false;
-        } else {
-            can_black_k_castle = false;
-        }
-    }
-
-    /* invalidating castling by moving king */
-    if (piece == K) {
-        if (side) {
-            can_white_k_castle = false;
-            can_white_q_castle = false;
-        } else {
-            can_black_k_castle = false;
-            can_black_q_castle = false;
-        }
-    }
-
-    /* invalidating castling by castling*/
-    if (m.k_castle || m.q_castle) {
-        if (side) {
-            can_white_k_castle = false;
-            can_white_q_castle = false;
-        } else {
-            can_black_k_castle = false;
-            can_black_q_castle = false;
-        }
-    }
-
-    /* ending game if king is captured */
-    if (captured == K) {
-        decisive_result = true;
-    }
-}
-
 void tweaker_random_js(Board &board) {
     for (int lim = 0; lim < 10; lim++) {
     // for (;;) {
         bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
         bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
 
-        Move m = random_guess(board, moved_2_spaces, k_uacamole, q_uacamole, side);
+        Move m = random_guess(board, moved_2_spaces, k_uacamole, q_uacamole, moved_2_spaces, side);
         Piece piece = board.pieces[m.start];
         Piece captured = board.pieces[m.end];
 
         board = make_move(board, m, side);
-        update_global_states(m, piece, captured);
+        update_global_states(m, piece, captured, side);
 
         debug_bbs(board);
         print_pieces(board);
@@ -118,7 +65,7 @@ void cli_game_loop() {
                 Piece captured = board.pieces[m.end];
 
                 board = make_move(board, m, side);
-                update_global_states(m, piece, captured);
+                update_global_states(m, piece, captured, side);
 
                 debug_bbs(board);
                 print_pieces(board);

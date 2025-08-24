@@ -489,6 +489,88 @@ Board make_move(const Board &board, Move m, Side side) {
     return new_board;
 }
 
+/**
+ * generates `move` struct
+ * real purpose is to helps to set the promotion, castling, and en_peasant booleans
+ */
+Move get_move(i32 start, i32 end, Piece piece, Piece captured, Piece promote) {
+    Move res = null_move;
+    res.start = start;
+    res.end = end;
+
+    if (piece == K && end - start == 2) {
+        res.k_castle = true;
+    }
+
+    if (piece == K && start - end == 2) {
+        res.q_castle = true;
+    }
+
+    // will this lead to excessive checks for en peasant?
+    // jank: check capture by seeing files don't align
+    if (piece == P && COL(start) != COL(end) && captured == X) {
+        res.en_peasant = true;
+    }
+
+    return res;
+}
+
+/**
+ * this function makes me want to kill myself 
+ */
+void update_global_states(Move m, Piece piece, Piece captured, Side side) {
+    /* pawns pushed 2 squares */
+    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
+        moved_2_spaces = m.end;
+    } else {
+        moved_2_spaces = -1;
+    }
+
+    /* invalidating castling by moving rook */
+    if (COL(m.start) == 0 && piece == R) {
+        if (side) {
+            can_white_q_castle = false;
+        } else {
+            can_black_q_castle = false;
+        }
+    }
+
+    if (COL(m.start) == 7 && piece == R) {
+        if (side) {
+            can_white_k_castle = false;
+        } else {
+            can_black_k_castle = false;
+        }
+    }
+
+    /* invalidating castling by moving king */
+    if (piece == K) {
+        if (side) {
+            can_white_k_castle = false;
+            can_white_q_castle = false;
+        } else {
+            can_black_k_castle = false;
+            can_black_q_castle = false;
+        }
+    }
+
+    /* invalidating castling by castling*/
+    if (m.k_castle || m.q_castle) {
+        if (side) {
+            can_white_k_castle = false;
+            can_white_q_castle = false;
+        } else {
+            can_black_k_castle = false;
+            can_black_q_castle = false;
+        }
+    }
+
+    /* ending game if king is captured */
+    if (captured == K) {
+        decisive_result = true;
+    }
+}
+
 void generate_rook_magics() {
     for (i32 square = 0; square < 64; square++) {
         u64 magic = 0;

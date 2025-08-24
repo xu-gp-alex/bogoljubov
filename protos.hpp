@@ -38,14 +38,18 @@ extern bool is_check(i32 square, u64 occupancy, u64 enemy_R_or_Q, u64 enemy_B_or
 
 extern Board make_move(const Board &board, Move m, Side side); 
 
+extern Move get_move(i32 start, i32 end, Piece piece, Piece captured, Piece promote);
+extern void update_global_states(Move m, Piece piece, Piece captured, Side side);
+
 // get rid of these man...
 extern void generate_rook_magics(); // (MUST BE CALLED BEFORE `init_board`)
 extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)
 
 /* search.cpp */
 
-extern std::vector<Move> extract_moves(const Board& board, bool k_castle, bool q_castle, Side side);
-extern Move random_guess(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, Side side);
+extern std::vector<Move> extract_moves(const Board& board, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
+extern Move random_guess(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
+extern Move min_max(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
 
 /* eval.cpp */
 
