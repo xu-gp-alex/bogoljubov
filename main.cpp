@@ -6,28 +6,80 @@
 #include "protos.hpp"
 #include "cli.hpp"
 
-void tweaker_random_js(Board &board) {
-    for (int lim = 0; lim < 10; lim++) {
-    // for (;;) {
-        bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
-        bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
+void update_states(Board &board, Move m, Piece piece, Piece captured, Side side) {
+    /* pawns pushed 2 squares */
+    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
+        board.m2s = m.end;
+    } else {
+        board.m2s = -1;
+    }
 
-        Move m = random_guess(board, moved_2_spaces, k_uacamole, q_uacamole, moved_2_spaces, side);
-        Piece piece = board.pieces[m.start];
-        Piece captured = board.pieces[m.end];
+    /* invalidating castling by moving rook */
+    if (COL(m.start) == 0 && piece == R) {
+        if (side) {
+            board.can_white_q_castle = false;
+        } else {
+            board.can_black_q_castle = false;
+        }
+    }
 
-        board = make_move(board, m, side);
-        update_global_states(m, piece, captured, side);
+    if (COL(m.start) == 7 && piece == R) {
+        if (side) {
+            board.can_white_k_castle = false;
+        } else {
+            board.can_black_k_castle = false;
+        }
+    }
 
-        debug_bbs(board);
-        print_pieces(board);
+    /* invalidating castling by moving king */
+    if (piece == K) {
+        if (side) {
+            board.can_white_k_castle = false;
+            board.can_white_q_castle = false;
+        } else {
+            board.can_black_k_castle = false;
+            board.can_black_q_castle = false;
+        }
+    }
 
-        side = (side) ? Black : White;
-        if (decisive_result) break;
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    /* invalidating castling by castling*/
+    if (m.k_castle || m.q_castle) {
+        if (side) {
+            board.can_white_k_castle = false;
+            board.can_white_q_castle = false;
+        } else {
+            board.can_black_k_castle = false;
+            board.can_black_q_castle = false;
+        }
+    }
+
+    if (captured == K) {
+        decisive_result = true;
     }
 }
+
+// void tweaker_random_js(Board &board) {
+//     for (int lim = 0; lim < 10; lim++) {
+//     // for (;;) {
+//         bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
+//         bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
+
+//         Move m = random_guess(board, moved_2_spaces, k_uacamole, q_uacamole, moved_2_spaces, side);
+//         Piece piece = board.pieces[m.start];
+//         Piece captured = board.pieces[m.end];
+
+//         board = make_move(board, m, side);
+//         update_global_states(m, piece, captured, side);
+
+//         debug_bbs(board);
+//         print_pieces(board);
+
+//         side = (side) ? Black : White;
+//         if (decisive_result) break;
+        
+//         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+//     }
+// }
 
 void cli_game_loop() {
     std::cout << "\nWelcome to BOGOLJUBOV chess engine :wilted-rose:\n";
@@ -57,18 +109,20 @@ void cli_game_loop() {
         if (valid_str(input)) {
             Move m = str_to_move(board, input);
             
-            bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
-            bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
+            // temporary fix continues
+            // bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
+            // bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
 
-            if (is_move_legal(board, m, side, k_uacamole, q_uacamole, moved_2_spaces)) {
+            if (is_move_legal(board, m, side)) {
                 Piece piece = board.pieces[m.start];
                 Piece captured = board.pieces[m.end];
 
                 board = make_move(board, m, side);
-                update_global_states(m, piece, captured, side);
+                // update_global_states(m, piece, captured, side);
 
-                debug_bbs(board);
-                print_pieces(board);
+                // debug_bbs(board);
+                // print_pieces(board);
+                debug_board(board);
 
                 side = (side) ? Black : White;
             } else {
@@ -101,94 +155,3 @@ int main() {
     cli_game_loop();
     return 0;
 }
-
-//     if (no_control) {
-//         i32 limit = 400;
-//         while (limit--) {
-//             bool k_uacamole = (side) ? can_white_k_castle : can_black_k_castle;
-//             bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
-
-//             move u = random_guess(board, en_peasant, k_uacamole, q_uacamole, side);
-//             if (u.start == null_move.start) {
-//                 break;
-//             }
-
-//             if (board.pieces[u.start] == K && u.end - u.start == 2) u.k_castle = true;
-//             if (board.pieces[u.start] == K && u.start - u.end == 2) u.q_castle = true;
-
-//             Piece stupid = board.pieces[u.start];
-//             Piece slimed = board.pieces[u.end];
-//             board = make_move(board, u.start, u.end, en_peasant, k_uacamole, q_uacamole, side, u.promote);
-
-//             // testing
-//             // debug_bb(board.sides[White], "White");
-//             // debug_bb(board.sides[Black], "Black");
-
-//             // make_move also takes castling rights? should the outside determine what boolean to pass in? (prolly yes)
-            
-//             if (stupid == P && abs(ROW(u.start) - ROW(u.end)) == 2) {
-//                 en_peasant = COL(u.start);
-//             } else {
-//                 en_peasant = -1;
-//             }
-
-//             if (COL(u.start) == 0 && stupid == R) {
-//                 if (side) {
-//                     can_white_q_castle = false;
-//                 } else {
-//                     can_black_q_castle = false;
-//                 }
-//             }
-
-//             if (COL(u.start) == 7 && stupid == R) {
-//                 if (side) {
-//                     can_white_k_castle = false;
-//                 } else {
-//                     can_black_k_castle = false;
-//                 }
-//             }
-
-//             if (stupid == K) {
-//                 if (side) {
-//                     can_white_k_castle = false;
-//                     can_white_q_castle = false;
-//                 } else {
-//                     can_black_k_castle = false;
-//                     can_black_q_castle = false;
-//                 }
-//             }
-
-//             if (u.k_castle || u.q_castle) {
-//                 if (side) {
-//                     can_white_k_castle = false;
-//                     can_white_q_castle = false;
-//                 } else {
-//                     can_black_k_castle = false;
-//                     can_black_q_castle = false;
-//                 }
-//             }
-
-//             debug_bbs(board);
-//             print_pieces(board);
-
-//             // lowk restarted placement...
-//             if (slimed == K) {
-//                 decisive_result = true;
-//                 break;
-//             }
-
-//             side = (side) ? Black : White;
-//             std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//         }
-//     }
-    
-//     if (decisive_result) {
-//         if (side) {
-//             std::cout << "congratulations to WHITE on winning!\n";
-//         } else {
-//             std::cout << "congratulations to BLACK on winning!\n";
-//         }
-//     }
-
-//     return 0;
-// }

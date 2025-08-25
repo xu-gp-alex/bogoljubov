@@ -9,19 +9,19 @@ struct Board {
     Piece pieces[64];
     u64 pieces_bb[6];
     u64 sides[2];
+
+    i32 m2s;
+    bool can_white_k_castle;
+    bool can_white_q_castle;
+    bool can_black_k_castle;
+    bool can_black_q_castle;
 };
 
 // extern Board global_board;
 
 extern u32 ply;
 extern Side side; // 0=black, 1=white
-extern i32 moved_2_spaces;
 extern bool decisive_result; // make this express more results
-
-extern bool can_white_k_castle;
-extern bool can_white_q_castle;
-extern bool can_black_k_castle;
-extern bool can_black_q_castle;
 
 extern const u64 rook_masks[64];
 extern const u64 bishop_masks[64];

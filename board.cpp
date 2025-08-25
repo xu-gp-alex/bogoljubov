@@ -168,13 +168,7 @@ bool try_bishop_magic(u64 square, u64 magic) {
 void init_data() {
     ply = 0;
     side = White;
-    moved_2_spaces = -1;
     decisive_result = false;
-
-    can_white_k_castle = true;
-    can_white_q_castle = true;
-    can_black_k_castle = true;
-    can_black_q_castle = true;
 }
 
 Board get_new_board() {
@@ -193,6 +187,13 @@ Board get_new_board() {
 
     new_board.sides[Black] = 0xffff000000000000ull;
     new_board.sides[White] = 0x000000000000ffffull;
+
+    new_board.m2s = -1;
+    new_board.can_white_k_castle = true;
+    new_board.can_white_q_castle = true;
+    new_board.can_black_k_castle = true;
+    new_board.can_black_q_castle = true;
+
     return new_board;
 }
 
@@ -343,17 +344,23 @@ bool can_promote(i32 square, Side side) {
             (side == Black && ROW(square) == 1);
 }
 
-bool is_move_legal(const Board &board, Move m, Side side, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s) {
+bool is_move_legal(const Board &board, Move m, Side side) {
+
+    // temporary fix, now that `Board` stores some other stuff
+    bool k_castle_possible = (side) ? board.can_white_k_castle : board.can_black_k_castle;
+    bool q_castle_possible = (side) ? board.can_white_q_castle : board.can_black_q_castle;
+    i32 enemy_m2s = board.m2s;
+
     u64 friendly = board.sides[side];
     u64 enemy = board.sides[side ^ 1];
     u64 piece = board.pieces[m.start];
 
-    if ((friendly & (1ull << m.start)) == 0ull) { std::cout << "can't move opponent's piece lol\n"; return false; } // can't move opponent's piece lol
-    if (m.promote != X && !can_promote(m.start, side)) { std::cout << "can't promote pawns before last rank\n"; return false; } // can't promote pawns before last rank
-    if (m.promote == X && can_promote(m.start, side)) { std::cout << "can't promote to pawn\n"; return false; } // can't promote to pawn
-    if (m.k_castle && !k_castle_possible) { std::cout << "can't castle kingside\n"; return false; } // can't castle kingside
-    if (m.q_castle && !q_castle_possible) { std::cout << "can't castle queenside\n"; return false; } // can't castle queenside
-    if (m.en_peasant && enemy_m2s == -1) { std::cout << "nothing to en peasant\n"; return false; } // nothing to en peasant
+    if ((friendly & (1ull << m.start)) == 0ull) return false; // can't move opponent's piece lol
+    if (m.promote != X && !can_promote(m.start, side)) return false; // can't promote pawns before last rank
+    if (m.promote == X && can_promote(m.start, side)) return false; // can't promote to pawn
+    if (m.k_castle && !k_castle_possible) return false; // can't castle kingside
+    if (m.q_castle && !q_castle_possible) return false; // can't castle queenside
+    if (m.en_peasant && enemy_m2s == -1) return false; // nothing to en peasant
 
     u64 moves = get_pseudolegal_moves(friendly, enemy, m.start, board.pieces[m.start], k_castle_possible, q_castle_possible, enemy_m2s);
     u64 cand = 1ull << m.end;
@@ -390,10 +397,13 @@ Board exec_en_passant(const Board &board, i32 start, i32 end) {
     new_board.pieces[end] = P;
     new_board.pieces[tgt_sq] = X;
 
+    // update states
+    new_board.m2s = -1;
+
     return new_board;
 }
 
-Board exec_k_castle(const Board &board, i32 start) {
+Board exec_k_castle(const Board &board, i32 start, Side side) {
     Board new_board = board;
 
     u64 king_mask = 0x5ull << start;
@@ -412,10 +422,20 @@ Board exec_k_castle(const Board &board, i32 start) {
     new_board.pieces[start + 2] = K;
     new_board.pieces[start + 3] = X;
 
+    // update states
+    if (side) {
+        new_board.can_white_k_castle = false;
+        new_board.can_white_q_castle = false;
+    } else {
+        new_board.can_black_k_castle = false;
+        new_board.can_black_q_castle = false;
+    }
+    new_board.m2s = -1;
+
     return new_board;
 }
 
-Board exec_q_castle(const Board &board, i32 start) {
+Board exec_q_castle(const Board &board, i32 start, Side side) {
     Board new_board = board;
 
     u64 king_mask = 0x14ull << (start - 4);
@@ -433,6 +453,16 @@ Board exec_q_castle(const Board &board, i32 start) {
     new_board.pieces[start - 1] = R;
     new_board.pieces[start - 2] = K;
     new_board.pieces[start - 4] = X;
+
+    // update states
+    if (side) {
+        new_board.can_white_k_castle = false;
+        new_board.can_white_q_castle = false;
+    } else {
+        new_board.can_black_k_castle = false;
+        new_board.can_black_q_castle = false;
+    }
+    new_board.m2s = -1;
 
     return new_board;
 }
@@ -456,14 +486,17 @@ Board exec_promotion(const Board &board, i32 start, i32 end, Piece promotion, Pi
     new_board.pieces[start] = X;
     new_board.pieces[end] = promotion;
 
+    // update states
+    new_board.m2s = -1;
+
     return new_board;
 }
 
 // ASSUME ALL MOVES ARE LEGAL
 Board make_move(const Board &board, Move m, Side side) {
     if (m.promote != X) return exec_promotion(board, m.start, m.end, m.promote, board.pieces[m.end], side); // <-- jank as to how captured is passed
-    if (m.k_castle) return exec_k_castle(board, m.start); // side
-    if (m.q_castle) return exec_q_castle(board, m.start); // side
+    if (m.k_castle) return exec_k_castle(board, m.start, side);
+    if (m.q_castle) return exec_q_castle(board, m.start, side);
     if (m.en_peasant) return exec_en_passant(board, m.start, m.end); 
 
     Board new_board = board;
@@ -485,6 +518,42 @@ Board make_move(const Board &board, Move m, Side side) {
     // update piece array
     new_board.pieces[m.start] = X;
     new_board.pieces[m.end] = piece;
+
+    // update states
+    /* pawns pushed 2 squares */
+    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
+        new_board.m2s = m.end;
+    } else {
+        new_board.m2s = -1;
+    }
+
+    /* invalidating castling by moving rook */
+    if (COL(m.start) == 0 && piece == R) {
+        if (side) {
+            new_board.can_white_q_castle = false;
+        } else {
+            new_board.can_black_q_castle = false;
+        }
+    }
+
+    if (COL(m.start) == 7 && piece == R) {
+        if (side) {
+            new_board.can_white_k_castle = false;
+        } else {
+            new_board.can_black_k_castle = false;
+        }
+    }
+
+    /* invalidating castling by moving king */
+    if (piece == K) {
+        if (side) {
+            new_board.can_white_k_castle = false;
+            new_board.can_white_q_castle = false;
+        } else {
+            new_board.can_black_k_castle = false;
+            new_board.can_black_q_castle = false;
+        }
+    }
 
     return new_board;
 }
@@ -513,62 +582,6 @@ Move get_move(i32 start, i32 end, Piece piece, Piece captured, Piece promote) {
     }
 
     return res;
-}
-
-/**
- * this function makes me want to kill myself 
- */
-void update_global_states(Move m, Piece piece, Piece captured, Side side) {
-    /* pawns pushed 2 squares */
-    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
-        moved_2_spaces = m.end;
-    } else {
-        moved_2_spaces = -1;
-    }
-
-    /* invalidating castling by moving rook */
-    if (COL(m.start) == 0 && piece == R) {
-        if (side) {
-            can_white_q_castle = false;
-        } else {
-            can_black_q_castle = false;
-        }
-    }
-
-    if (COL(m.start) == 7 && piece == R) {
-        if (side) {
-            can_white_k_castle = false;
-        } else {
-            can_black_k_castle = false;
-        }
-    }
-
-    /* invalidating castling by moving king */
-    if (piece == K) {
-        if (side) {
-            can_white_k_castle = false;
-            can_white_q_castle = false;
-        } else {
-            can_black_k_castle = false;
-            can_black_q_castle = false;
-        }
-    }
-
-    /* invalidating castling by castling*/
-    if (m.k_castle || m.q_castle) {
-        if (side) {
-            can_white_k_castle = false;
-            can_white_q_castle = false;
-        } else {
-            can_black_k_castle = false;
-            can_black_q_castle = false;
-        }
-    }
-
-    /* ending game if king is captured */
-    if (captured == K) {
-        decisive_result = true;
-    }
 }
 
 void generate_rook_magics() {

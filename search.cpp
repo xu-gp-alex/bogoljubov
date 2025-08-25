@@ -117,5 +117,5 @@ i32 mini(const Board &board, i32 depth) {
 }
 
 Move min_max(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, i32 enemy_m2s, Side side) {
-
+    return null_move;
 }

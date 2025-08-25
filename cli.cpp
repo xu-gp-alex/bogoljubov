@@ -88,6 +88,17 @@ void debug_bbs(const Board &board) {
     std::cout << '\n';
 }
 
+void debug_board(const Board &board) {
+    std::cout<< "pieces: \n";
+    debug_pieces(board);
+    debug_bbs(board);
+    std::cout << "m2s: " << board.m2s << '\n';
+    std::cout << "wKc: " << board.can_white_k_castle << '\n';
+    std::cout << "wQc: " << board.can_white_q_castle << '\n';
+    std::cout << "bKc: " << board.can_black_k_castle << '\n';
+    std::cout << "bQc: " << board.can_black_q_castle << '\n';
+}
+
 void debug_bb(u64 curr) {
     for (int i = 15; i >= 0; i-=2) {
         std::cout << rev_str[(curr >> (4 * (i-1))) & 0xF];

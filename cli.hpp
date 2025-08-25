@@ -9,6 +9,7 @@ extern void print_move(const Move &move);
 
 extern void debug_pieces(const Board &board);
 extern void debug_bbs(const Board &board);
+extern void debug_board(const Board &board);
 extern void debug_bb(u64 curr);
 extern void debug_bb(u64 curr, std::string label);
 

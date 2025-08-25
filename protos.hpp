@@ -32,14 +32,13 @@ extern bool can_en_peasant(i32 square, i32 enemy_m2s);
 extern u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s);
 
 extern bool can_promote(i32 square, Side side);
-extern bool is_move_legal(const Board &board, Move m, Side side, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s);
+extern bool is_move_legal(const Board &board, Move m, Side side);
 
 extern bool is_check(i32 square, u64 occupancy, u64 enemy_R_or_Q, u64 enemy_B_or_Q, u64 enemy_N, u64 enemy_wP, u64 enemy_bP, Side side);
 
 extern Board make_move(const Board &board, Move m, Side side); 
 
 extern Move get_move(i32 start, i32 end, Piece piece, Piece captured, Piece promote);
-extern void update_global_states(Move m, Piece piece, Piece captured, Side side);
 
 // get rid of these man...
 extern void generate_rook_magics(); // (MUST BE CALLED BEFORE `init_board`)
