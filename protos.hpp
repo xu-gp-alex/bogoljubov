@@ -8,6 +8,9 @@
 inline i32 ROW(i32 sq) { return sq >> 3; }
 inline i32 COL(i32 sq) { return sq & 7; }
 
+// this returns new `Side` var
+inline Side flip(Side side) { return (side) ? Black : White; }
+
 /* board.cpp */
 
 extern void init_data();
@@ -46,9 +49,9 @@ extern void generate_bishop_magics(); // (MUST BE CALLED BEFORE `init_board`)
 
 /* search.cpp */
 
-extern std::vector<Move> extract_moves(const Board& board, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
+extern std::vector<Move> extract_moves(const Board& board, Side side);
 extern Move random_guess(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
-extern Move min_max(const Board &board, i32 en_peasant, bool k_castle, bool q_castle, i32 enemy_m2s, Side side);
+extern Move min_max(const Board &board, Side side, i32 depth);
 
 /* eval.cpp */
 

@@ -1,18 +1,5 @@
 #include "protos.hpp"
 
-#include <map>
-#include <bit>
-
-// std::map<Piece, i32> piece_val = {
-//     {X, 0}, 
-//     {P, 1}, 
-//     {N, 3}, 
-//     {K, 1000}, 
-//     {Q, 9}, 
-//     {B, 3}, 
-//     {R, 5}, 
-// };
-
 /**
  * currently just checks material count
  */

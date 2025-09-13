@@ -396,4 +396,7 @@ u64 bishop_magics[64];
 u64 rook_moves[64][1 << 12];
 u64 bishop_moves[64][1 << 9];
 
+// dangerous precedent for the youth
+u64 num_moves_considered = 0;
+
 const Move null_move = {-1, -1, X, false, false, false};

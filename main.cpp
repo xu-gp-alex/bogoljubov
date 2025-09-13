@@ -6,58 +6,6 @@
 #include "protos.hpp"
 #include "cli.hpp"
 
-void update_states(Board &board, Move m, Piece piece, Piece captured, Side side) {
-    /* pawns pushed 2 squares */
-    if (piece == P && abs(ROW(m.start) - ROW(m.end)) == 2) {
-        board.m2s = m.end;
-    } else {
-        board.m2s = -1;
-    }
-
-    /* invalidating castling by moving rook */
-    if (COL(m.start) == 0 && piece == R) {
-        if (side) {
-            board.can_white_q_castle = false;
-        } else {
-            board.can_black_q_castle = false;
-        }
-    }
-
-    if (COL(m.start) == 7 && piece == R) {
-        if (side) {
-            board.can_white_k_castle = false;
-        } else {
-            board.can_black_k_castle = false;
-        }
-    }
-
-    /* invalidating castling by moving king */
-    if (piece == K) {
-        if (side) {
-            board.can_white_k_castle = false;
-            board.can_white_q_castle = false;
-        } else {
-            board.can_black_k_castle = false;
-            board.can_black_q_castle = false;
-        }
-    }
-
-    /* invalidating castling by castling*/
-    if (m.k_castle || m.q_castle) {
-        if (side) {
-            board.can_white_k_castle = false;
-            board.can_white_q_castle = false;
-        } else {
-            board.can_black_k_castle = false;
-            board.can_black_q_castle = false;
-        }
-    }
-
-    if (captured == K) {
-        decisive_result = true;
-    }
-}
-
 // void tweaker_random_js(Board &board) {
 //     for (int lim = 0; lim < 10; lim++) {
 //     // for (;;) {
@@ -80,6 +28,26 @@ void update_states(Board &board, Move m, Piece piece, Piece captured, Side side)
 //         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 //     }
 // }
+
+void test_move_generation(Board curr_pos, Side side) {
+    std::vector<Move> moves = extract_moves(curr_pos, side);
+    for (Move move : moves) { // we all die in the end don't we
+        Board fo_sho = make_move(curr_pos, move, side);
+        print_pieces(fo_sho);
+    }
+
+    printf("Summary:\n");
+    printf("%zu Moves Found\n", moves.size());
+    printf("0 Life Prospects\n");
+    printf("0 Financial Stability\n");
+}
+
+void test_min_max(Board curr_pos, Side side, i32 depth) {
+    printf("searching at depth %d...\n", depth);
+    Move m = min_max(curr_pos, side, depth);
+    print_pieces(make_move(curr_pos, m, side));
+    printf("considered %llu moves...\n", num_moves_considered);
+}
 
 void cli_game_loop() {
     std::cout << "\nWelcome to BOGOLJUBOV chess engine :wilted-rose:\n";
@@ -104,6 +72,12 @@ void cli_game_loop() {
         } else if (input == "r") {
             // tweaker_random_js(board);
             break;
+        } else if (input == "t") {
+            test_move_generation(board, side);
+            continue;
+        } else if (input == "m") {
+            test_min_max(board, side, 4);
+            continue;
         }
 
         if (valid_str(input)) {
@@ -121,8 +95,8 @@ void cli_game_loop() {
                 // update_global_states(m, piece, captured, side);
 
                 // debug_bbs(board);
-                // print_pieces(board);
-                debug_board(board);
+                print_pieces(board);
+                // debug_board(board);
 
                 side = (side) ? Black : White;
             } else {
