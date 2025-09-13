@@ -37,6 +37,42 @@ void print_move(const Move &move) {
     std::cout << '\n';
 }
 
+std::string move_to_str(const Move &m, const Board &b, Side s) {
+    if (m.start == null_move.start) {
+        return "null_move";
+    }
+
+    if (m.k_castle) {
+        return "o-o";
+    }
+
+    if (m.q_castle) {
+        return "o-O-o";
+    }
+
+    std::string res = "";
+    if (s) {
+        res.append(w_piece_to_str[1 + b.pieces[m.start]]);
+    } else {
+        res.append(b_piece_to_str[1 + b.pieces[m.start]]);
+    }
+
+    res += (char) (97 + (m.start & 7));
+    res += (char) ('0' + (m.start >> 3) + 1);
+    res += (char) (97 + (m.end & 7));
+    res += (char) ('0' + (m.end >> 3) + 1);
+
+    if (m.promote != X) {
+        if (s) {
+            res.append(w_piece_to_str[1 + m.promote]);
+        } else {
+            res.append(b_piece_to_str[1 + m.promote]);
+        }
+    }
+
+    return res;
+}
+
 void debug_pieces(const Board &board) {
     for (int i = 7; i >= 0; i--) {
         for (int j = 0; j < 8; j++) {

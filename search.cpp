@@ -36,7 +36,8 @@ std::vector<Move> extract_moves(const Board &board, Side side) {
             board.pieces[start_sq], 
             start_digging_, 
             in_yo_butt_twn, 
-            board.m2s
+            board.m2s,
+            side
         );
         // debug_bb(moves);
         i32 end_sq = __builtin_ctzll(moves);
@@ -47,6 +48,11 @@ std::vector<Move> extract_moves(const Board &board, Side side) {
 
         while (moves & 1) {
             if (board.pieces[start_sq] == P && (ROW(end_sq) == 0 || ROW(end_sq) == 7)) {
+
+                if (ROW(start_sq) == 6 && ROW(end_sq) == 7) {
+                    printf("how is this fucking possible??\n");
+                }
+
                 Move prom_to_N = {start_sq, end_sq, N, false, false, false};
                 Move prom_to_Q = {start_sq, end_sq, Q, false, false, false};
                 Move prom_to_B = {start_sq, end_sq, B, false, false, false};
@@ -99,13 +105,19 @@ i32 mini(const Board &board, Side side, i32 depth);
 
 // always know that it's white?
 i32 maxi(const Board &board, Side side, i32 depth) {
-    if (depth == 0) return evaluate(board);
+    if (depth == 0) {
+        // printf("\nEvaluation: %d\n", evaluate(board));
+        // print_pieces(board);
+        return evaluate(board);
+    }
     i32 max = n_infty;
     std::vector<Move> all_moves = extract_moves(board, side);
     num_moves_considered += all_moves.size();
     for (Move cand : all_moves) {
-        Board clouds = make_move(board, cand, flip(side));
-        i32 score = mini(board, side, depth - 1);
+        // std::cout << move_to_str(cand, board, side) << '\n';
+        Board clouds = make_move(board, cand, side);
+        // print_pieces(clouds);
+        i32 score = mini(clouds, flip(side), depth - 1);
         if (score > max) {
             max = score;
         }
@@ -114,13 +126,19 @@ i32 maxi(const Board &board, Side side, i32 depth) {
 }
 
 i32 mini(const Board &board, Side side, i32 depth) {
-    if (depth == 0) return evaluate(board);
+    if (depth == 0) {
+        // printf("\nEvaluation: %d\n", evaluate(board));
+        // print_pieces(board);
+        return evaluate(board);
+    }
     i32 min = p_infty;
     std::vector<Move> all_moves = extract_moves(board, side);
     num_moves_considered += all_moves.size();
     for (Move cand : all_moves) {
-        Board clouds = make_move(board, cand, flip(side));
-        i32 score = maxi(board, side, depth - 1);
+        // std::cout << move_to_str(cand, board, side) << '\n';
+        Board clouds = make_move(board, cand, side);
+        // print_pieces(clouds);
+        i32 score = maxi(clouds, flip(side), depth - 1);
         if (score < min) {
             min = score;
         }
@@ -133,9 +151,8 @@ i32 mini(const Board &board, Side side, i32 depth) {
 Move min_max(const Board &board, Side side, i32 depth) { 
     Move final_move = null_move;
     std::vector<Move> all_moves = extract_moves(board, side);
-    printf("%zu dddd\n", all_moves.size());
     i32 high_score = n_infty;
-    i32 low_score = p_infty; // wtf is a pangrea
+    i32 low_score = p_infty; 
 
     num_moves_considered = all_moves.size();
 
@@ -143,16 +160,17 @@ Move min_max(const Board &board, Side side, i32 depth) {
         i32 score = 0;
 
         Board gaston = make_move(board, all_moves[ptr], side);
+        // print_pieces(gaston);
         // side = (side) ? Black : White;
 
         if (side) {
-            score = mini(board, flip(side), depth - 1);
+            score = mini(gaston, flip(side), depth - 1);
             if (score > high_score) {
                 high_score = score;
                 final_move = all_moves[ptr];
             }
         } else {
-            score = maxi(board, flip(side), depth - 1);
+            score = maxi(gaston, flip(side), depth - 1);
             if (score < low_score) {
                 low_score = score;
                 final_move = all_moves[ptr];

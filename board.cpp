@@ -184,9 +184,16 @@ Board get_new_board() {
     new_board.pieces_bb[Q] = 0x0800000000000008ull;
     new_board.pieces_bb[B] = 0x2400000000000024ull;
     new_board.pieces_bb[R] = 0x8100000000000081ull;
+    // new_board.pieces_bb[N] = 0ull;
+    // new_board.pieces_bb[K] = 0ull;
+    // new_board.pieces_bb[Q] = 0ull;
+    // new_board.pieces_bb[B] = 0ull;
+    // new_board.pieces_bb[R] = 0ull;
 
     new_board.sides[Black] = 0xffff000000000000ull;
     new_board.sides[White] = 0x000000000000ffffull;
+    // new_board.sides[Black] = 0x00ff000000000000ull;
+    // new_board.sides[White] = 0x000000000000ff00ull;
 
     new_board.m2s = -1;
     new_board.can_white_k_castle = true;
@@ -291,11 +298,17 @@ bool can_en_peasant(i32 square, i32 enemy_m2s) {
  * @param can_q_castle whether queenside castle is eventually possible
  * @return
  */
-u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s) {
+u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s, Side side) {
     u64 occupancy = friendly | enemy;
     u64 moves = 0ull;
 
     if (piece == P) {
+        // HOLY RELIC OF A BUG GODDAMN, USING GLOBAL `side` HERE!!!
+        // escaped attention bc usually, in cli_game_loop, global side
+        // is updated correctly anyways. However, in min_max(), global side
+        // is updated locally, not globally!!
+
+        // temporarily passing in side as a param BUT REMOVE LATER!!!
         if (side) {
             moves = get_white_pawn_pushes(square, occupancy);
             moves |= get_white_pawn_captures(square) & enemy;
@@ -303,6 +316,7 @@ u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool
             moves = get_black_pawn_pushes(square, occupancy);
             moves |= get_black_pawn_captures(square) & enemy;
         }
+
 
         // not sufficient to show en_passant is possible
         if (enemy_m2s != -1 && can_en_peasant(square, enemy_m2s)) {
@@ -362,7 +376,7 @@ bool is_move_legal(const Board &board, Move m, Side side) {
     if (m.q_castle && !q_castle_possible) return false; // can't castle queenside
     if (m.en_peasant && enemy_m2s == -1) return false; // nothing to en peasant
 
-    u64 moves = get_pseudolegal_moves(friendly, enemy, m.start, board.pieces[m.start], k_castle_possible, q_castle_possible, enemy_m2s);
+    u64 moves = get_pseudolegal_moves(friendly, enemy, m.start, board.pieces[m.start], k_castle_possible, q_castle_possible, enemy_m2s, side);
     u64 cand = 1ull << m.end;
     return moves & cand; // see if ending square is amongst the (pseudo)legal moves
 }

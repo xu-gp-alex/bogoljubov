@@ -32,7 +32,7 @@ extern u64 get_queen_moves(i32 square, u64 occupancy);
 extern bool can_k_castle(i32 square, u64 occupancy); 
 extern bool can_q_castle(i32 square, u64 occupancy); 
 extern bool can_en_peasant(i32 square, i32 enemy_m2s); 
-extern u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s);
+extern u64 get_pseudolegal_moves(u64 friendly, u64 enemy, i32 square, Piece piece, bool k_castle_possible, bool q_castle_possible, i32 enemy_m2s, Side side);
 
 extern bool can_promote(i32 square, Side side);
 extern bool is_move_legal(const Board &board, Move m, Side side);

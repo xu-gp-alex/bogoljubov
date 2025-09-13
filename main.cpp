@@ -57,6 +57,7 @@ void cli_game_loop() {
 
     init_data();
     Board board = get_new_board();
+    debug_board(board);
 
     for (;;) {
         std::cout << "User Move: ";
@@ -88,6 +89,9 @@ void cli_game_loop() {
             // bool q_uacamole = (side) ? can_white_q_castle : can_black_q_castle;
 
             if (is_move_legal(board, m, side)) {
+
+                std::cout << move_to_str(m, board, side) << '\n';
+
                 Piece piece = board.pieces[m.start];
                 Piece captured = board.pieces[m.end];
 

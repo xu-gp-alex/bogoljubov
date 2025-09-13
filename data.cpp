@@ -1,6 +1,19 @@
 #include "data.hpp"
 
+// deleteme (maybe?)
+#include <string>
+
 u8 pieces[64];
+// const Piece init[64] = {
+//     X, X, X, X, X, X, X, X,
+//     P, P, P, P, P, P, P, P, 
+//     X, X, X, X, X, X, X, X, 
+//     X, X, X, X, X, X, X, X, 
+//     X, X, X, X, X, X, X, X, 
+//     X, X, X, X, X, X, X, X, 
+//     P, P, P, P, P, P, P, P, 
+//     X, X, X, X, X, X, X, X
+// };
 const Piece init[64] = {
     R, N, B, Q, K, B, N, R,
     P, P, P, P, P, P, P, P, 
@@ -396,7 +409,7 @@ u64 bishop_magics[64];
 u64 rook_moves[64][1 << 12];
 u64 bishop_moves[64][1 << 9];
 
-// dangerous precedent for the youth
 u64 num_moves_considered = 0;
+std::string history = "";
 
 const Move null_move = {-1, -1, X, false, false, false};

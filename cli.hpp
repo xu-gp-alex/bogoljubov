@@ -7,6 +7,8 @@
 extern void print_pieces(const Board &board);
 extern void print_move(const Move &move);
 
+std::string move_to_str(const Move &m, const Board &b, Side s);
+
 extern void debug_pieces(const Board &board);
 extern void debug_bbs(const Board &board);
 extern void debug_board(const Board &board);

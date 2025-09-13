@@ -2,6 +2,9 @@
 
 #include "def.hpp"
 
+// deleteme
+#include <string>
+
 extern const Piece init[64];
 
 // move to def.hpp?
@@ -36,5 +39,6 @@ extern u64 rook_moves[64][1 << 12];
 extern u64 bishop_moves[64][1 << 9];
 
 extern u64 num_moves_considered;
+extern std::string history;
 
 extern const Move null_move;
